@@ -62,7 +62,7 @@ export default function PaperCard({ paper }: PaperCardProps) {
             ))}
           </div>
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{paper.cited_by_count.toLocaleString()} cited</span>
+            <span>{(paper.cited_by_count ?? 0).toLocaleString()} cited</span>
             {paper.is_open_access && (
               <Badge
                 variant="outline"

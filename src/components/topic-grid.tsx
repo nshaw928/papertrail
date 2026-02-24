@@ -7,7 +7,7 @@ interface TopicItem {
   id: string;
   name: string;
   level: number;
-  works_count: number;
+  works_count: number | null;
   paper_count?: number;
 }
 
@@ -35,7 +35,7 @@ export default function TopicGrid({ topics, title }: TopicGridProps) {
                     {levelName(topic.level)}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {(topic.paper_count ?? topic.works_count).toLocaleString()}{" "}
+                    {(topic.paper_count ?? topic.works_count ?? 0).toLocaleString()}{" "}
                     papers
                   </span>
                 </div>

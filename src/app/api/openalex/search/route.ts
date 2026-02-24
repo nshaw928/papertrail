@@ -3,6 +3,7 @@ import { searchWorks } from "@/lib/openalex/client";
 import { ingestWorks } from "@/lib/openalex/ingest";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { WorkWithRelations } from "@/lib/types/app";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -55,13 +56,7 @@ export async function GET(request: NextRequest) {
         .eq("work_id", work.id)
         .order("position");
 
-      const authors: {
-        id: string;
-        display_name: string;
-        orcid: string | null;
-        position: number;
-        is_corresponding: boolean;
-      }[] = [];
+      const authors: WorkWithRelations["authors"] = [];
       if (authorLinks?.length) {
         const { data: authorRows } = await supabase
           .from("authors")
@@ -91,13 +86,7 @@ export async function GET(request: NextRequest) {
         .eq("work_id", work.id)
         .order("score", { ascending: false });
 
-      const topics: {
-        id: string;
-        name: string;
-        level: number;
-        score: number;
-        is_primary: boolean;
-      }[] = [];
+      const topics: WorkWithRelations["topics"] = [];
       if (topicLinks?.length) {
         const { data: topicRows } = await supabase
           .from("topics")

@@ -106,32 +106,8 @@ async function loadWorkFromDb(
   }
 
   return {
-    id: work.id,
-    title: work.title,
-    abstract: work.abstract,
-    year: work.year,
-    doi: work.doi,
-    cited_by_count: work.cited_by_count,
-    publication_date: work.publication_date,
-    type: work.type,
-    language: work.language,
-    is_retracted: work.is_retracted,
-    is_open_access: work.is_open_access,
-    open_access_url: work.open_access_url,
-    fwci: work.fwci,
-    counts_by_year: work.counts_by_year as WorkWithRelations["counts_by_year"],
-    biblio: work.biblio as WorkWithRelations["biblio"],
-    keywords: work.keywords as WorkWithRelations["keywords"],
-    sustainable_development_goals: work.sustainable_development_goals as WorkWithRelations["sustainable_development_goals"],
-    mesh: work.mesh as WorkWithRelations["mesh"],
-    indexed_in: work.indexed_in,
-    is_stub: work.is_stub,
-    source_id: work.source_id,
-    source_display_name: work.source_display_name,
-    summary: work.summary,
-    ai_tags: work.ai_tags as WorkWithRelations["ai_tags"],
-    citations_fetched: work.citations_fetched,
+    ...work,
     authors,
     topics,
-  };
+  } as WorkWithRelations;
 }

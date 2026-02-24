@@ -10,6 +10,26 @@ import { getOrFetchWork } from "@/lib/openalex/get-or-fetch";
 import { isSafeUrl, levelName } from "@/lib/utils";
 import type { GraphData } from "@/lib/types/app";
 
+function TopicBadges({ topics }: { topics: { id: string; name: string; score: number | null }[] }) {
+  if (topics.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {topics.map((t) => (
+        <Link key={t.id} href={`/topics/${t.id}`}>
+          <Badge variant="secondary">
+            {t.name}
+            {t.score != null && (
+              <span className="ml-1 opacity-60">
+                {(t.score * 100).toFixed(0)}%
+              </span>
+            )}
+          </Badge>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -55,6 +75,12 @@ export default async function PaperPage({ params }: PageProps) {
     ).catch(() => {});
   }
 
+  const { authors, topics } = paper;
+  const paperKeywords = Array.isArray(paper.keywords)
+    ? (paper.keywords as { display_name: string }[])
+    : null;
+  const paperFwci = typeof paper.fwci === "number" ? paper.fwci : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -64,10 +90,10 @@ export default async function PaperPage({ params }: PageProps) {
 
       {/* Authors */}
       <div className="text-sm text-muted-foreground">
-        {paper.authors.map((a, i) => (
+        {authors.map((a, i) => (
           <span key={a.id}>
             {a.display_name}
-            {i < paper.authors.length - 1 && ", "}
+            {i < authors.length - 1 && ", "}
           </span>
         ))}
       </div>
@@ -83,7 +109,7 @@ export default async function PaperPage({ params }: PageProps) {
           </span>
         )}
         <span className="text-muted-foreground">
-          {paper.cited_by_count.toLocaleString()} citations
+          {(paper.cited_by_count ?? 0).toLocaleString()} citations
         </span>
         {paper.is_open_access && (
           <Badge
@@ -125,22 +151,7 @@ export default async function PaperPage({ params }: PageProps) {
       )}
 
       {/* Topics */}
-      {paper.topics.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {paper.topics.map((t) => (
-            <Link key={t.id} href={`/topics/${t.id}`}>
-              <Badge variant="secondary">
-                {t.name}
-                {t.score != null && (
-                  <span className="ml-1 opacity-60">
-                    {(t.score * 100).toFixed(0)}%
-                  </span>
-                )}
-              </Badge>
-            </Link>
-          ))}
-        </div>
-      )}
+      <TopicBadges topics={topics} />
 
       <Separator />
 
@@ -165,34 +176,32 @@ export default async function PaperPage({ params }: PageProps) {
       )}
 
       {/* Details (expandable metadata) */}
-      {(paper.fwci || paper.keywords || paper.biblio) && (
+      {(paperFwci || paperKeywords || !!paper.biblio) && (
         <details className="space-y-2">
           <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
             More details
           </summary>
           <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-            {paper.fwci && <p>FWCI: {paper.fwci.toFixed(2)}</p>}
+            {paperFwci != null && <p>FWCI: {paperFwci.toFixed(2)}</p>}
             {paper.type && <p>Type: {paper.type}</p>}
             {paper.language && <p>Language: {paper.language}</p>}
-            {paper.keywords && Array.isArray(paper.keywords) && (
+            {paperKeywords && paperKeywords.length > 0 ? (
               <div>
                 <p className="font-medium">Keywords:</p>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {(paper.keywords as { display_name: string }[]).map(
-                    (kw, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">
-                        {kw.display_name}
-                      </Badge>
-                    )
-                  )}
+                  {paperKeywords.map((kw, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {kw.display_name}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-            )}
-            {paper.topics.length > 0 && (
+            ) : null}
+            {topics.length > 0 && (
               <div>
                 <p className="font-medium">Topic hierarchy:</p>
                 <ul className="mt-1 space-y-1">
-                  {paper.topics.map((t) => (
+                  {topics.map((t) => (
                     <li key={t.id}>
                       <span className="opacity-60">{levelName(t.level)}:</span>{" "}
                       {t.name}

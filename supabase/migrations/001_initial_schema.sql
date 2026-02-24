@@ -270,9 +270,9 @@ create policy "Users can delete own saved works"
 -- ============================================================
 
 create or replace function get_citation_graph(target_work_id text, max_nodes integer default 40)
-returns json as $$
+returns jsonb as $$
 declare
-  result json;
+  result jsonb;
 begin
   with center as (
     select id, title, year, cited_by_count, is_stub
@@ -304,13 +304,13 @@ begin
     select distinct on (id) * from all_papers
   ),
   paper_nodes as (
-    select json_agg(json_build_object(
+    select coalesce(jsonb_agg(jsonb_build_object(
       'id', id,
       'label', case when is_stub then id else left(title, 60) end,
       'type', 'paper',
       'year', year,
       'cited_by_count', cited_by_count
-    )) as nodes
+    )), '[]'::jsonb) as nodes
     from unique_papers
   ),
   topic_data as (
@@ -320,21 +320,21 @@ begin
     where wt.work_id = target_work_id
   ),
   topic_nodes as (
-    select json_agg(json_build_object(
+    select coalesce(jsonb_agg(jsonb_build_object(
       'id', id,
       'label', name,
       'type', 'topic',
       'year', null,
       'cited_by_count', null
-    )) as nodes
+    )), '[]'::jsonb) as nodes
     from topic_data
   ),
   cite_edges as (
-    select json_agg(json_build_object(
+    select coalesce(jsonb_agg(jsonb_build_object(
       'source', citing_work_id,
       'target', cited_work_id,
       'type', 'cites'
-    )) as edges
+    )), '[]'::jsonb) as edges
     from (
       select citing_work_id, cited_work_id
       from work_citations
@@ -348,17 +348,17 @@ begin
     ) ce
   ),
   topic_edges as (
-    select json_agg(json_build_object(
+    select coalesce(jsonb_agg(jsonb_build_object(
       'source', target_work_id,
       'target', topic_id,
       'type', 'has_topic'
-    )) as edges
+    )), '[]'::jsonb) as edges
     from work_topics
     where work_id = target_work_id
   )
-  select json_build_object(
-    'nodes', coalesce(pn.nodes, '[]'::json) || coalesce(tn.nodes, '[]'::json),
-    'edges', coalesce(ce.edges, '[]'::json) || coalesce(te.edges, '[]'::json)
+  select jsonb_build_object(
+    'nodes', pn.nodes || tn.nodes,
+    'edges', ce.edges || te.edges
   ) into result
   from paper_nodes pn, topic_nodes tn, cite_edges ce, topic_edges te;
 
