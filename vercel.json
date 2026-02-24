@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/enrich-stubs",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 6 * * *"
     }
   ]
 }
