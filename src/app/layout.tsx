@@ -35,7 +35,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Nav user={user} />
-        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+        {children}
       </body>
     </html>
   );

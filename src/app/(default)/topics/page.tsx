@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import TopicsViewToggle from "@/components/topics-view-toggle";
+import TopicGrid from "@/components/topic-grid";
 
 export default async function TopicsPage() {
   const supabase = await createClient();
 
-  // Get domain-level topics (level 0) with paper counts for grid view
   const { data: domainTopics } = await supabase
     .from("topics")
     .select("id, name, level, works_count")
@@ -21,12 +20,6 @@ export default async function TopicsPage() {
     })
   );
 
-  // Get all topics for graph view (lightweight, no joins)
-  const { data: allTopics } = await supabase
-    .from("topics")
-    .select("id, name, level, parent_topic_id, works_count")
-    .order("level", { ascending: true });
-
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -38,10 +31,7 @@ export default async function TopicsPage() {
       </div>
 
       {gridTopics.length > 0 ? (
-        <TopicsViewToggle
-          gridTopics={gridTopics}
-          allTopics={allTopics ?? []}
-        />
+        <TopicGrid topics={gridTopics} />
       ) : (
         <p className="text-muted-foreground">
           No topics yet. Search for papers to start populating topics.

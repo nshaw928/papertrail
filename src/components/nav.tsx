@@ -9,6 +9,7 @@ import UserMenu from "@/components/user-menu";
 const links = [
   { href: "/", label: "Search" },
   { href: "/topics", label: "Topics" },
+  { href: "/graph", label: "Graph" },
   { href: "/library", label: "Library" },
 ];
 
