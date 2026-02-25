@@ -74,8 +74,8 @@ export default function TopicGraph({ topics }: TopicGraphProps) {
             "text-max-width": "140px",
             "text-valign": "bottom",
             "text-margin-y": 8,
-            width: "mapData(works_count, 0, 50000, 35, 65)",
-            height: "mapData(works_count, 0, 50000, 35, 65)",
+            width: 50,
+            height: 50,
           },
         },
         {
@@ -89,8 +89,8 @@ export default function TopicGraph({ topics }: TopicGraphProps) {
             "text-max-width": "110px",
             "text-valign": "bottom",
             "text-margin-y": 6,
-            width: "mapData(works_count, 0, 20000, 22, 45)",
-            height: "mapData(works_count, 0, 20000, 22, 45)",
+            width: 35,
+            height: 35,
           },
         },
         {
@@ -104,8 +104,8 @@ export default function TopicGraph({ topics }: TopicGraphProps) {
             "text-max-width": "90px",
             "text-valign": "bottom",
             "text-margin-y": 5,
-            width: "mapData(works_count, 0, 10000, 15, 35)",
-            height: "mapData(works_count, 0, 10000, 15, 35)",
+            width: 25,
+            height: 25,
           },
         },
         {
@@ -119,8 +119,8 @@ export default function TopicGraph({ topics }: TopicGraphProps) {
             "text-max-width": "80px",
             "text-valign": "bottom",
             "text-margin-y": 4,
-            width: "mapData(works_count, 0, 5000, 10, 28)",
-            height: "mapData(works_count, 0, 5000, 10, 28)",
+            width: 18,
+            height: 18,
           },
         },
         {

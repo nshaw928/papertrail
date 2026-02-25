@@ -21,11 +21,10 @@ export default async function TopicsPage() {
     })
   );
 
-  // Get all topics with works for graph view (lightweight, no joins)
+  // Get all topics for graph view (lightweight, no joins)
   const { data: allTopics } = await supabase
     .from("topics")
     .select("id, name, level, parent_topic_id, works_count")
-    .gt("works_count", 0)
     .order("level", { ascending: true });
 
   return (
