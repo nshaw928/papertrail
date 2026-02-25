@@ -4,9 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import SaveButton from "@/components/save-button";
 import CitationColumns from "@/components/citation-columns";
+import AISummarySection from "@/components/ai-summary-section";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrFetchWork } from "@/lib/openalex/get-or-fetch";
+import { getUserPlan } from "@/lib/supabase/plans";
+import { PLAN_LIMITS } from "@/lib/plans";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
 import { fetchCitations, fetchCitedBy } from "@/lib/semantic-scholar/client";
 import { isSafeUrl, levelName } from "@/lib/utils";
@@ -49,6 +52,7 @@ export default async function PaperPage({ params }: PageProps) {
     data: { user },
   } = await supabase.auth.getUser();
   let isSaved = false;
+  let canGenerate = false;
   if (user) {
     const { data: saved } = await supabase
       .from("saved_works")
@@ -57,6 +61,9 @@ export default async function PaperPage({ params }: PageProps) {
       .eq("work_id", id)
       .maybeSingle();
     isSaved = !!saved;
+
+    const userPlan = await getUserPlan(supabase, user.id);
+    canGenerate = PLAN_LIMITS[userPlan.plan].aiSummariesOnDemand;
   }
 
   // Enrich citations from Semantic Scholar if not yet fetched
@@ -219,14 +226,12 @@ export default async function PaperPage({ params }: PageProps) {
       )}
 
       {/* AI Summary */}
-      {paper.summary && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">AI Summary</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {paper.summary}
-          </p>
-        </section>
-      )}
+      <AISummarySection
+        workId={id}
+        initialSummary={paper.summary}
+        initialTags={Array.isArray(paper.ai_tags) ? paper.ai_tags as string[] : null}
+        canGenerate={canGenerate}
+      />
 
       {/* Details (expandable metadata) */}
       {(paperFwci || paperKeywords || !!paper.biblio) && (

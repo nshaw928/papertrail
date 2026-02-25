@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/supabase/server";
+import { getUserPlan } from "@/lib/supabase/plans";
+import { PLAN_LIMITS } from "@/lib/plans";
 import PaperCard from "@/components/paper-card";
 import CollectionHeader from "@/components/collection-header";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
@@ -19,6 +21,9 @@ export default async function CollectionPage({ params }: PageProps) {
     .single();
 
   if (!collection) notFound();
+
+  const userPlan = await getUserPlan(supabase, user.id);
+  const canExport = PLAN_LIMITS[userPlan.plan].exportEnabled;
 
   const { data: collectionWorks } = await supabase
     .from("collection_works")
@@ -51,6 +56,7 @@ export default async function CollectionPage({ params }: PageProps) {
         id={collection.id}
         name={collection.name}
         count={papers.length}
+        canExport={canExport}
       />
 
       {papers.length > 0 ? (

@@ -5,17 +5,20 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ExportButton from "@/components/export-button";
 
 interface CollectionHeaderProps {
   id: string;
   name: string;
   count: number;
+  canExport?: boolean;
 }
 
 export default function CollectionHeader({
   id,
   name,
   count,
+  canExport = false,
 }: CollectionHeaderProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -90,6 +93,7 @@ export default function CollectionHeader({
           <Button variant="ghost" size="sm" onClick={handleDelete}>
             <Trash2 className="h-4 w-4" />
           </Button>
+          <ExportButton scope="collection" collectionId={id} canExport={canExport} />
         </div>
       )}
       <p className="text-muted-foreground">

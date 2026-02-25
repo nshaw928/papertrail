@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Network, FolderOpen, Plus } from "lucide-react";
 import { requireUser } from "@/lib/supabase/server";
+import { getUserPlan } from "@/lib/supabase/plans";
+import { PLAN_LIMITS } from "@/lib/plans";
 import PaperCard from "@/components/paper-card";
+import ExportButton from "@/components/export-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
@@ -35,6 +38,9 @@ export default async function LibraryPage() {
     papers = hydrated;
   }
 
+  const userPlan = await getUserPlan(supabase, user.id);
+  const canExport = PLAN_LIMITS[userPlan.plan].exportEnabled;
+
   // Fetch collections with work counts
   const { data: collections } = await supabase
     .from("collections")
@@ -58,14 +64,19 @@ export default async function LibraryPage() {
             {papers.length} saved paper{papers.length !== 1 ? "s" : ""}
           </p>
         </div>
-        {papers.length > 0 && (
-          <Button variant="outline" asChild>
-            <Link href="/library/graph">
-              <Network className="mr-2 h-4 w-4" />
-              View as Graph
-            </Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {papers.length > 0 && (
+            <>
+              <ExportButton scope="library" canExport={canExport} />
+              <Button variant="outline" asChild>
+                <Link href="/library/graph">
+                  <Network className="mr-2 h-4 w-4" />
+                  View as Graph
+                </Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {collectionsWithCounts.length > 0 && (

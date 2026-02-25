@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import ManageSubscriptionButton from "./manage-subscription-button";
+import PasswordResetButton from "@/components/password-reset-button";
 
 export default async function SettingsPage() {
   const { supabase, user } = await requireUser();
@@ -73,6 +74,15 @@ export default async function SettingsPage() {
               <Link href="/pricing">Upgrade</Link>
             </Button>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Security</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PasswordResetButton email={user.email!} />
         </CardContent>
       </Card>
 

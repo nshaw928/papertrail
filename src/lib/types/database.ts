@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_jobs: {
+        Row: {
+          id: string
+          work_id: string
+          user_id: string | null
+          priority: number
+          status: string
+          source_url: string | null
+          error: string | null
+          created_at: string | null
+          started_at: string | null
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          work_id: string
+          user_id?: string | null
+          priority?: number
+          status?: string
+          source_url?: string | null
+          error?: string | null
+          created_at?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          work_id?: string
+          user_id?: string | null
+          priority?: number
+          status?: string
+          source_url?: string | null
+          error?: string | null
+          created_at?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_jobs_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       author_institutions: {
         Row: {
           author_id: string

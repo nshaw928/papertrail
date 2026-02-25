@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: papertrail-ai-worker
+  labels:
+    app: papertrail-ai-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: papertrail-ai-worker
+  template:
+    metadata:
+      labels:
+        app: papertrail-ai-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: worker
+          image: papertrail-ai-worker:latest
+          envFrom:
+            - configMapRef:
+                name: papertrail-ai-worker
+            - secretRef:
+                name: papertrail-ai-worker
+          env:
+            - name: PROMPTS_PATH
+              value: /config/prompts.yaml
+          volumeMounts:
+            - name: prompts
+              mountPath: /config/prompts.yaml
+              subPath: prompts.yaml
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: prompts
+          configMap:
+            name: papertrail-ai-worker
+            items:
+              - key: prompts.yaml
+                path: prompts.yaml

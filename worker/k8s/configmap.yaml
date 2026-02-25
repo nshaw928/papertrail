@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: papertrail-ai-worker
+data:
+  SUPABASE_URL: "https://your-project.supabase.co"
+  OLLAMA_BASE_URL: "http://ollama.default.svc.cluster.local:11434"
+  OLLAMA_MODEL: "llama3.1:8b"
+  POLL_INTERVAL: "15"
+  BATCH_ENABLED: "true"
+  MAX_TEXT_CHARS: "30000"
+  PROMPTS_PATH: "/config/prompts.yaml"
+  prompts.yaml: |
+    summary:
+      system: |
+        You are a research paper summarizer. Produce concise, accurate summaries.
+      user: |
+        Summarize the following academic paper:
+        1. A 2-3 paragraph summary covering key contributions, methodology, and findings.
+        2. A JSON array of 3-8 descriptive tags.
+
+        Format:
+        SUMMARY:
+        <paragraphs>
+
+        TAGS:
+        ["tag1", "tag2", ...]
+
+        Paper text:
+        {text}

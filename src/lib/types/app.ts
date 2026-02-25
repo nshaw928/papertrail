@@ -30,7 +30,7 @@ export interface WorkWithRelations {
   source_id: string | null;
   source_display_name: string | null;
   summary: string | null;
-  ai_tags: unknown;
+  ai_tags: string[] | null;
   citations_fetched: boolean | null;
   authors: {
     id: string;
