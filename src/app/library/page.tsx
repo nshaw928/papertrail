@@ -1,18 +1,9 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/server";
 import PaperCard from "@/components/paper-card";
 import type { WorkWithRelations } from "@/lib/types/app";
 
 export default async function LibraryPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireUser();
 
   // Get saved works
   const { data: savedWorks } = await supabase

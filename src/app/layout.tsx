@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { createClient } from "@/lib/supabase/server";
 import Nav from "@/components/nav";
 import "./globals.css";
 
@@ -18,17 +19,22 @@ export const metadata: Metadata = {
   description: "Explore academic research with citation graphs and topic hierarchies",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Nav />
+        <Nav user={user} />
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
       </body>
     </html>

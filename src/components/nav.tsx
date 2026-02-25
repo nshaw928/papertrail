@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
+import UserMenu from "@/components/user-menu";
 
 const links = [
   { href: "/", label: "Search" },
@@ -10,7 +12,7 @@ const links = [
   { href: "/library", label: "Library" },
 ];
 
-export default function Nav() {
+export default function Nav({ user }: { user: User | null }) {
   const pathname = usePathname();
 
   return (
@@ -36,12 +38,7 @@ export default function Nav() {
           ))}
         </nav>
         <div className="ml-auto">
-          <Link
-            href="/login"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign in
-          </Link>
+          <UserMenu user={user} />
         </div>
       </div>
     </header>
