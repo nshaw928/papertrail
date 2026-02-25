@@ -14,12 +14,45 @@ function toQueryString(params: Record<string, string>): string {
 export async function searchWorks(
   query: string,
   page = 1,
-  perPage = 20
+  perPage = 20,
+  opts?: {
+    fromYear?: number;
+    toYear?: number;
+    sort?: string;
+  }
 ): Promise<{ results: Record<string, unknown>[]; meta: Record<string, unknown> }> {
   const params = buildParams();
   params.search = query;
   params.page = String(page);
   params.per_page = String(perPage);
+
+  // Year filter
+  const filters: string[] = [];
+  if (opts?.fromYear) {
+    filters.push(`publication_year:>${opts.fromYear - 1}`);
+  }
+  if (opts?.toYear) {
+    filters.push(`publication_year:<${opts.toYear + 1}`);
+  }
+  if (filters.length > 0) {
+    params.filter = filters.join(",");
+  }
+
+  // Sort
+  if (opts?.sort) {
+    switch (opts.sort) {
+      case "cited_by_count":
+        params.sort = "cited_by_count:desc";
+        break;
+      case "newest":
+        params.sort = "publication_date:desc";
+        break;
+      case "oldest":
+        params.sort = "publication_date:asc";
+        break;
+      // "relevance" is the default — no sort param needed
+    }
+  }
 
   const resp = await fetch(`${OPENALEX_BASE}/works?${toQueryString(params)}`, {
     next: { revalidate: 0 },
@@ -46,7 +79,6 @@ export async function batchGetWorks(
   ids: string[]
 ): Promise<Record<string, unknown>[]> {
   if (ids.length === 0) return [];
-  // OpenAlex supports pipe-separated filter
   const params = buildParams();
   params.filter = `openalex:${ids.join("|")}`;
   params.per_page = String(Math.min(ids.length, 50));

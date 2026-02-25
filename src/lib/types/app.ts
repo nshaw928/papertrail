@@ -6,25 +6,6 @@ export interface TopicNode {
   works_count: number | null;
 }
 
-export interface GraphNode {
-  id: string;
-  label: string;
-  type: "paper" | "topic";
-  year?: number | null;
-  cited_by_count?: number | null;
-}
-
-export interface GraphEdge {
-  source: string;
-  target: string;
-  type: "cites" | "has_topic";
-}
-
-export interface GraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
-
 export interface WorkWithRelations {
   id: string;
   title: string;

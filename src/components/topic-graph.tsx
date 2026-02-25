@@ -269,7 +269,7 @@ export default function TopicGraph({ topics, children }: TopicGraphProps) {
   }, [buildElements, router]);
 
   return (
-    <div className="relative h-[calc(100dvh-3.5rem)] w-full">
+    <div className="relative h-[calc(100dvh-3rem)] w-full">
       <div ref={containerRef} className="h-full w-full" />
       {children}
       <div className="absolute bottom-4 left-4 flex items-center gap-4 rounded-full bg-card/80 px-4 py-2 text-xs text-muted-foreground backdrop-blur">
