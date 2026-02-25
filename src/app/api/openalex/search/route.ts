@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchWorks } from "@/lib/openalex/client";
 import { ingestWorks } from "@/lib/openalex/ingest";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { requireApiUser } from "@/lib/supabase/server";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
+import { checkLimit } from "@/lib/supabase/plans";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -16,6 +17,20 @@ export async function GET(request: NextRequest) {
 
   if (!query) {
     return NextResponse.json({ error: "Missing query" }, { status: 400 });
+  }
+
+  // Require auth — unauthenticated users can't search (costs money)
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  const { supabase, user } = auth;
+
+  // Check search rate limit
+  const limit = await checkLimit(supabase, user.id, "search");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: limit.reason, code: "LIMIT_REACHED" },
+      { status: 429 }
+    );
   }
 
   try {
@@ -33,13 +48,14 @@ export async function GET(request: NextRequest) {
     const admin = createAdminClient();
     const ingested = await ingestWorks(admin, openalexResults);
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Track usage
+    await admin.rpc("increment_usage", {
+      target_user_id: user.id,
+      field: "search_count",
+    });
 
     const results = await loadWorksWithRelations(supabase, ingested, {
-      userId: user?.id,
+      userId: user.id,
     });
 
     return NextResponse.json({

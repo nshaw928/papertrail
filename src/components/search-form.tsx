@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import PaperCard from "./paper-card";
 import Pagination from "./pagination";
+import UpgradePrompt from "./upgrade-prompt";
 import type { SearchResult } from "@/lib/types/app";
 
 export default function SearchForm() {
@@ -19,6 +20,7 @@ export default function SearchForm() {
   const [results, setResults] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [fromYear, setFromYear] = useState("");
   const [toYear, setToYear] = useState("");
@@ -29,6 +31,7 @@ export default function SearchForm() {
       if (!query.trim()) return;
       setLoading(true);
       setError(null);
+      setLimitReached(null);
       try {
         const params = new URLSearchParams({
           q: query,
@@ -40,6 +43,15 @@ export default function SearchForm() {
         if (sort && sort !== "relevance") params.set("sort", sort);
 
         const resp = await fetch(`/api/openalex/search?${params}`);
+        if (resp.status === 401) {
+          setError("Sign in to search papers.");
+          return;
+        }
+        if (resp.status === 429) {
+          const data = await resp.json();
+          setLimitReached(data.error ?? "Daily search limit reached.");
+          return;
+        }
         if (!resp.ok) throw new Error("Search failed");
         const data: SearchResult = await resp.json();
         setResults(data);
@@ -110,6 +122,8 @@ export default function SearchForm() {
           </Select>
         </div>
       </form>
+
+      {limitReached && <UpgradePrompt message={limitReached} />}
 
       {error && (
         <p className="text-sm text-destructive">{error}</p>

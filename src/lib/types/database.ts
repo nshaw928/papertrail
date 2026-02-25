@@ -87,6 +87,7 @@ export type Database = {
           name: string
           updated_at: string | null
           user_id: string
+          visibility: Database["public"]["Enums"]["collection_visibility"]
         }
         Insert: {
           created_at?: string | null
@@ -94,6 +95,7 @@ export type Database = {
           name: string
           updated_at?: string | null
           user_id: string
+          visibility?: Database["public"]["Enums"]["collection_visibility"]
         }
         Update: {
           created_at?: string | null
@@ -101,6 +103,7 @@ export type Database = {
           name?: string
           updated_at?: string | null
           user_id?: string
+          visibility?: Database["public"]["Enums"]["collection_visibility"]
         }
         Relationships: []
       }
@@ -581,6 +584,225 @@ export type Database = {
           },
         ]
       }
+      lab_collections: {
+      Row: {
+        lab_id: string
+        collection_id: string
+        pinned: boolean | null
+        pinned_by: string | null
+        pinned_at: string | null
+        shared_at: string | null
+      }
+      Insert: {
+        lab_id: string
+        collection_id: string
+        pinned?: boolean | null
+        pinned_by?: string | null
+        pinned_at?: string | null
+        shared_at?: string | null
+      }
+      Update: {
+        lab_id?: string
+        collection_id?: string
+        pinned?: boolean | null
+        pinned_by?: string | null
+        pinned_at?: string | null
+        shared_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "lab_collections_lab_id_fkey"
+          columns: ["lab_id"]
+          isOneToOne: false
+          referencedRelation: "labs"
+          referencedColumns: ["id"]
+        },
+        {
+          foreignKeyName: "lab_collections_collection_id_fkey"
+          columns: ["collection_id"]
+          isOneToOne: false
+          referencedRelation: "collections"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    lab_invitations: {
+      Row: {
+        id: string
+        lab_id: string
+        email: string
+        role: Database["public"]["Enums"]["lab_role"]
+        invited_by: string
+        created_at: string | null
+        expires_at: string | null
+      }
+      Insert: {
+        id?: string
+        lab_id: string
+        email: string
+        role?: Database["public"]["Enums"]["lab_role"]
+        invited_by: string
+        created_at?: string | null
+        expires_at?: string | null
+      }
+      Update: {
+        id?: string
+        lab_id?: string
+        email?: string
+        role?: Database["public"]["Enums"]["lab_role"]
+        invited_by?: string
+        created_at?: string | null
+        expires_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "lab_invitations_lab_id_fkey"
+          columns: ["lab_id"]
+          isOneToOne: false
+          referencedRelation: "labs"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    lab_members: {
+      Row: {
+        lab_id: string
+        user_id: string
+        role: Database["public"]["Enums"]["lab_role"]
+        invited_by: string | null
+        invited_email: string | null
+        invited_at: string | null
+        joined_at: string | null
+      }
+      Insert: {
+        lab_id: string
+        user_id: string
+        role?: Database["public"]["Enums"]["lab_role"]
+        invited_by?: string | null
+        invited_email?: string | null
+        invited_at?: string | null
+        joined_at?: string | null
+      }
+      Update: {
+        lab_id?: string
+        user_id?: string
+        role?: Database["public"]["Enums"]["lab_role"]
+        invited_by?: string | null
+        invited_email?: string | null
+        invited_at?: string | null
+        joined_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "lab_members_lab_id_fkey"
+          columns: ["lab_id"]
+          isOneToOne: false
+          referencedRelation: "labs"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    labs: {
+      Row: {
+        id: string
+        name: string
+        owner_id: string
+        created_at: string | null
+        updated_at: string | null
+      }
+      Insert: {
+        id?: string
+        name: string
+        owner_id: string
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Update: {
+        id?: string
+        name?: string
+        owner_id?: string
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Relationships: []
+    }
+    subscriptions: {
+      Row: {
+        id: string
+        user_id: string
+        lab_id: string | null
+        stripe_customer_id: string | null
+        stripe_subscription_id: string | null
+        plan: Database["public"]["Enums"]["plan_type"]
+        status: Database["public"]["Enums"]["subscription_status"]
+        current_period_start: string | null
+        current_period_end: string | null
+        cancel_at_period_end: boolean | null
+        created_at: string | null
+        updated_at: string | null
+      }
+      Insert: {
+        id?: string
+        user_id: string
+        lab_id?: string | null
+        stripe_customer_id?: string | null
+        stripe_subscription_id?: string | null
+        plan?: Database["public"]["Enums"]["plan_type"]
+        status?: Database["public"]["Enums"]["subscription_status"]
+        current_period_start?: string | null
+        current_period_end?: string | null
+        cancel_at_period_end?: boolean | null
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Update: {
+        id?: string
+        user_id?: string
+        lab_id?: string | null
+        stripe_customer_id?: string | null
+        stripe_subscription_id?: string | null
+        plan?: Database["public"]["Enums"]["plan_type"]
+        status?: Database["public"]["Enums"]["subscription_status"]
+        current_period_start?: string | null
+        current_period_end?: string | null
+        cancel_at_period_end?: boolean | null
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "subscriptions_lab_id_fkey"
+          columns: ["lab_id"]
+          isOneToOne: false
+          referencedRelation: "labs"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    usage_daily: {
+      Row: {
+        user_id: string
+        date: string
+        search_count: number
+        ai_summary_requests: number
+        papers_saved: number
+      }
+      Insert: {
+        user_id: string
+        date?: string
+        search_count?: number
+        ai_summary_requests?: number
+        papers_saved?: number
+      }
+      Update: {
+        user_id?: string
+        date?: string
+        search_count?: number
+        ai_summary_requests?: number
+        papers_saved?: number
+      }
+      Relationships: []
+    }
     }
     Views: {
       [_ in never]: never
@@ -590,11 +812,22 @@ export type Database = {
         Args: { max_nodes?: number; target_work_id: string }
         Returns: Json
       }
+      get_user_plan: {
+        Args: { target_user_id: string }
+        Returns: Database["public"]["Enums"]["plan_type"]
+      }
+      increment_usage: {
+        Args: { target_user_id: string; field: string; amount?: number }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      plan_type: "free" | "researcher" | "lab"
+      subscription_status: "active" | "canceled" | "past_due" | "trialing" | "incomplete"
+      lab_role: "owner" | "admin" | "member"
+      collection_visibility: "private" | "lab" | "public"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -721,6 +954,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      plan_type: ["free", "researcher", "lab"] as const,
+      subscription_status: ["active", "canceled", "past_due", "trialing", "incomplete"] as const,
+      lab_role: ["owner", "admin", "member"] as const,
+      collection_visibility: ["private", "lab", "public"] as const,
+    },
   },
 } as const

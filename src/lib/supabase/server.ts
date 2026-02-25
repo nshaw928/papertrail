@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import type { Database } from "@/lib/types/database";
 
 export async function createClient() {
@@ -40,4 +41,20 @@ export async function requireUser() {
   }
 
   return { supabase, user };
+}
+
+/**
+ * For API routes: returns supabase client + user, or a 401 NextResponse.
+ */
+export async function requireApiUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
+  }
+
+  return { supabase, user } as const;
 }

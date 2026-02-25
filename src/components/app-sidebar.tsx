@@ -15,6 +15,8 @@ import {
   Plus,
   ChevronRight,
   Waypoints,
+  CreditCard,
+  FlaskConical,
 } from "lucide-react";
 import {
   Sidebar,
@@ -193,6 +195,17 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/lab"}
+                  >
+                    <Link href="/lab">
+                      <FlaskConical />
+                      <span>Lab</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -226,6 +239,12 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/pricing">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Plans & Pricing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

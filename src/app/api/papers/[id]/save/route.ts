@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireApiUser } from "@/lib/supabase/server";
+import { checkLimit } from "@/lib/supabase/plans";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  const { supabase, user } = auth;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Check saved papers limit
+  const limit = await checkLimit(supabase, user.id, "save_paper");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: limit.reason, code: "LIMIT_REACHED" },
+      { status: 429 }
+    );
   }
 
   const body = await request.json().catch(() => ({}));
@@ -28,7 +33,8 @@ export async function POST(
   );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Failed to save paper:", error.message);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 
   return NextResponse.json({ status: "saved", work_id: id });
@@ -39,14 +45,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  const { supabase, user } = auth;
 
   await supabase
     .from("saved_works")

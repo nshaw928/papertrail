@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireApiUser } from "@/lib/supabase/server";
+import { checkLimit } from "@/lib/supabase/plans";
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  const { supabase, user } = auth;
 
   const workId = request.nextUrl.searchParams.get("work_id");
 
@@ -19,7 +16,8 @@ export async function GET(request: NextRequest) {
     .order("name");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Failed to load collections:", error.message);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 
   if (workId) {
@@ -42,12 +40,17 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+  const { supabase, user } = auth;
+
+  // Check collection limit
+  const limit = await checkLimit(supabase, user.id, "create_collection");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: limit.reason, code: "LIMIT_REACHED" },
+      { status: 429 }
+    );
   }
 
   const body = await request.json().catch(() => ({}));
@@ -63,7 +66,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Failed to create collection:", error.message);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });

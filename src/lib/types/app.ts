@@ -89,3 +89,60 @@ export interface TopicWithChildren {
   children: TopicWithChildren[];
   paper_count?: number;
 }
+
+// ---- Plans & Subscriptions ----
+
+export type PlanType = "free" | "researcher" | "lab";
+
+export interface UserPlan {
+  plan: PlanType;
+  status: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface PlanLimits {
+  searchesPerDay: number | null; // null = unlimited
+  savedPapers: number | null;
+  collections: number | null;
+  aiSummariesOnDemand: boolean;
+  aiTags: boolean;
+  exportEnabled: boolean;
+  citationGraphHops: number;
+}
+
+// ---- Labs ----
+
+export interface Lab {
+  id: string;
+  name: string;
+  owner_id: string;
+  created_at: string;
+  member_count?: number;
+}
+
+export interface LabMember {
+  user_id: string;
+  email?: string;
+  display_name?: string;
+  role: "owner" | "admin" | "member";
+  joined_at: string | null;
+}
+
+export interface LabInvitation {
+  id: string;
+  lab_id: string;
+  lab_name?: string;
+  email: string;
+  role: "owner" | "admin" | "member";
+  created_at: string;
+  expires_at: string;
+}
+
+// ---- Usage ----
+
+export interface DailyUsage {
+  search_count: number;
+  ai_summary_requests: number;
+  papers_saved: number;
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchCitations, fetchCitedBy } from "@/lib/semantic-scholar/client";
 
@@ -6,6 +7,9 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireApiUser();
+  if ("error" in auth) return auth.error;
+
   const { id } = await params;
   const admin = createAdminClient();
 
