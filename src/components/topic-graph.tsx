@@ -31,18 +31,21 @@ const LEVEL_SIZES: Record<number, number> = {
   3: 32,
 };
 
-const LEVEL_PADDING: Record<number, number> = {
-  0: 30,
-  1: 20,
-  2: 12,
-  3: 8,
-};
+const LABEL_FONT_SIZES: Record<number, number> = { 0: 14, 1: 12, 2: 11, 3: 10 };
+const LABEL_WRAP_WIDTH: Record<number, number> = { 0: 180, 1: 160, 2: 140, 3: 120 };
 
 const LEVEL_BORDER_COLORS: Record<number, string> = {
   0: "#9db3ff",
   1: "#b08df8",
   2: "#fba54d",
   3: "#5ee3f2",
+};
+
+const LABEL_ZOOM_THRESHOLDS: Record<number, number> = {
+  0: 0,
+  1: 0,
+  2: 0.45,
+  3: 0.8,
 };
 
 export default function TopicGraph({ topics, children }: TopicGraphProps) {
@@ -81,93 +84,42 @@ export default function TopicGraph({ topics, children }: TopicGraphProps) {
       container: containerRef.current,
       elements: buildElements(),
       style: [
-        {
-          selector: "node[level = 0]",
+        ...([0, 1, 2, 3] as const).map((level) => ({
+          selector: `node[level = ${level}]`,
           style: {
-            "background-color": LEVEL_COLORS[0],
+            "background-color": LEVEL_COLORS[level],
             "background-opacity": 0.9,
-            label: "",
-            width: LEVEL_SIZES[0],
-            height: LEVEL_SIZES[0],
+            width: LEVEL_SIZES[level],
+            height: LEVEL_SIZES[level],
             "border-width": 2,
-            "border-color": LEVEL_BORDER_COLORS[0],
+            "border-color": LEVEL_BORDER_COLORS[level],
             "border-opacity": 0.3,
             cursor: "pointer",
             "transition-property": "width, height, border-width, border-color",
             "transition-duration": "150ms",
+            // Invisible native labels — layout engine measures these for spacing
+            label: "data(label)",
+            "text-opacity": 0,
+            "font-size": LABEL_FONT_SIZES[level],
+            "text-wrap": "wrap",
+            "text-max-width": `${LABEL_WRAP_WIDTH[level]}px`,
+            "text-valign": "bottom",
+            "text-margin-y": 8,
           },
-        },
-        {
-          selector: "node[level = 1]",
-          style: {
-            "background-color": LEVEL_COLORS[1],
-            "background-opacity": 0.9,
-            label: "",
-            width: LEVEL_SIZES[1],
-            height: LEVEL_SIZES[1],
-            "border-width": 2,
-            "border-color": LEVEL_BORDER_COLORS[1],
-            "border-opacity": 0.3,
-            cursor: "pointer",
-            "transition-property": "width, height, border-width, border-color",
-            "transition-duration": "150ms",
-          },
-        },
-        {
-          selector: "node[level = 2]",
-          style: {
-            "background-color": LEVEL_COLORS[2],
-            "background-opacity": 0.9,
-            label: "",
-            width: LEVEL_SIZES[2],
-            height: LEVEL_SIZES[2],
-            "border-width": 2,
-            "border-color": LEVEL_BORDER_COLORS[2],
-            "border-opacity": 0.3,
-            cursor: "pointer",
-            "transition-property": "width, height, border-width, border-color",
-            "transition-duration": "150ms",
-          },
-        },
-        {
-          selector: "node[level = 3]",
-          style: {
-            "background-color": LEVEL_COLORS[3],
-            "background-opacity": 0.9,
-            label: "",
-            width: LEVEL_SIZES[3],
-            height: LEVEL_SIZES[3],
-            "border-width": 2,
-            "border-color": LEVEL_BORDER_COLORS[3],
-            "border-opacity": 0.3,
-            cursor: "pointer",
-            "transition-property": "width, height, border-width, border-color",
-            "transition-duration": "150ms",
-          },
-        },
+        })),
         {
           selector: "edge",
           style: {
-            opacity: 0,
-            width: 0,
+            opacity: 0.15,
+            width: 1,
+            "line-color": "#475569",
+            "curve-style": "bezier",
             events: "no",
           },
         },
         {
           selector: "node.hovered",
           style: {
-            label: "data(label)",
-            color: "#fff",
-            "font-size": "10px",
-            "font-weight": "bold",
-            "text-wrap": "ellipsis",
-            "text-max-width": "140px",
-            "text-valign": "top",
-            "text-margin-y": -8,
-            "text-background-color": "#1e293b",
-            "text-background-opacity": 0.85,
-            "text-background-padding": "4px",
-            "text-background-shape": "roundrectangle",
             "border-width": 3,
             "border-color": "#ffffff",
             "border-opacity": 1,
@@ -179,18 +131,17 @@ export default function TopicGraph({ topics, children }: TopicGraphProps) {
       ] as any,
       layout: {
         name: "cose",
+        nodeDimensionsIncludeLabels: true,
         nodeRepulsion: (node: cytoscape.NodeSingular) => {
           const level = node.data("level") as number;
-          const padding = LEVEL_PADDING[level] ?? 12;
           const size = LEVEL_SIZES[level] ?? 32;
-          return (size + padding) * 100;
+          return size * 120;
         },
         nodeOverlap: 20,
-        idealEdgeLength: (edge: cytoscape.EdgeSingular) => 60,
-        edgeElasticity: (edge: cytoscape.EdgeSingular) => 100,
-        gravity: 0.8,
+        idealEdgeLength: () => 120,
+        edgeElasticity: () => 150,
+        gravity: 0.25,
         numIter: 5000,
-        nodeDimensionsIncludeLabels: false,
         fit: true,
         padding: 30,
         animate: true,
@@ -233,7 +184,86 @@ export default function TopicGraph({ topics, children }: TopicGraphProps) {
       );
     });
 
+    // HTML label overlay
+    const labelLayer = document.createElement("div");
+    labelLayer.style.cssText =
+      "position:absolute;inset:0;pointer-events:none;overflow:hidden;";
+    containerRef.current.style.position = "relative";
+    containerRef.current.appendChild(labelLayer);
+
+    const labelEls = new Map<string, HTMLDivElement>();
+
+    cy.nodes().forEach((node) => {
+      const el = document.createElement("div");
+      const level = node.data("level") as number;
+      const fontSize = LABEL_FONT_SIZES[level] ?? 8;
+      const wrapWidth = LABEL_WRAP_WIDTH[level] ?? 120;
+      el.textContent = node.data("label") as string;
+      el.style.cssText = `
+        position:absolute;
+        transform:translate(-50%,0);
+        color:#e2e8f0;
+        font-size:${fontSize}px;
+        line-height:1.3;
+        width:fit-content;
+        max-width:${wrapWidth}px;
+        text-align:center;
+        background:rgba(15,23,42,0.82);
+        padding:4px 10px;
+        border-radius:9999px;
+        white-space:nowrap;
+        pointer-events:none;
+        opacity:0;
+        transition:opacity 0.15s;
+        transform-origin:center top;
+      `;
+      labelLayer.appendChild(el);
+      labelEls.set(node.id(), el);
+
+      // If text is wider than wrap threshold, allow 2-line wrapping
+      if (el.scrollWidth > wrapWidth) {
+        el.style.whiteSpace = "normal";
+        el.style.borderRadius = "12px";
+      }
+    });
+
+    const LABEL_MIN_SCALE: Record<number, number> = { 0: 1, 1: 0.55, 2: 0.3, 3: 0.25 };
+
+    // Capture initial zoom after layout so field labels only appear when zoomed past it
+    let initialZoom = Infinity;
+
+    function updateLabelPositions() {
+      const zoom = cy.zoom();
+      const pan = cy.pan();
+      cy.nodes().forEach((node) => {
+        const el = labelEls.get(node.id());
+        if (!el) return;
+        const level = node.data("level") as number;
+        const threshold = level === 1 ? initialZoom : (LABEL_ZOOM_THRESHOLDS[level] ?? 1);
+        const visible = zoom >= threshold;
+        el.style.opacity = visible ? "1" : "0";
+        if (!visible) return;
+        const minScale = LABEL_MIN_SCALE[level] ?? 0.25;
+        const scale = Math.max(minScale, Math.pow(zoom, 0.75));
+        const pos = node.position();
+        const size = LEVEL_SIZES[level] ?? 32;
+        const x = pos.x * zoom + pan.x;
+        const y = pos.y * zoom + pan.y + (size / 2) * zoom + 6;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.transform = `translate(-50%,0) scale(${scale})`;
+      });
+    }
+
+    cy.one("layoutstop", () => {
+      initialZoom = cy.zoom() * 1.1;
+      updateLabelPositions();
+    });
+    cy.on("zoom pan", updateLabelPositions);
+    cy.on("position", "node", updateLabelPositions);
+
     return () => {
+      labelLayer.remove();
       cy.destroy();
     };
   }, [buildElements, router]);
