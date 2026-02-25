@@ -527,7 +527,8 @@ export type Database = {
       works: {
         Row: {
           abstract: string | null
-          ai_tags: Json | null
+          ai_summary: string | null
+          ai_summary_generated: boolean | null
           biblio: Json | null
           citations_fetched: boolean | null
           cited_by_count: number | null
@@ -549,8 +550,6 @@ export type Database = {
           related_work_ids: string[] | null
           source_display_name: string | null
           source_id: string | null
-          summary: string | null
-          summary_generated: boolean | null
           sustainable_development_goals: Json | null
           title: string
           type: string | null
@@ -559,7 +558,8 @@ export type Database = {
         }
         Insert: {
           abstract?: string | null
-          ai_tags?: Json | null
+          ai_summary?: string | null
+          ai_summary_generated?: boolean | null
           biblio?: Json | null
           citations_fetched?: boolean | null
           cited_by_count?: number | null
@@ -581,8 +581,6 @@ export type Database = {
           related_work_ids?: string[] | null
           source_display_name?: string | null
           source_id?: string | null
-          summary?: string | null
-          summary_generated?: boolean | null
           sustainable_development_goals?: Json | null
           title: string
           type?: string | null
@@ -591,7 +589,8 @@ export type Database = {
         }
         Update: {
           abstract?: string | null
-          ai_tags?: Json | null
+          ai_summary?: string | null
+          ai_summary_generated?: boolean | null
           biblio?: Json | null
           citations_fetched?: boolean | null
           cited_by_count?: number | null
@@ -613,8 +612,6 @@ export type Database = {
           related_work_ids?: string[] | null
           source_display_name?: string | null
           source_id?: string | null
-          summary?: string | null
-          summary_generated?: boolean | null
           sustainable_development_goals?: Json | null
           title?: string
           type?: string | null

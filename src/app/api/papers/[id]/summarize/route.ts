@@ -28,7 +28,7 @@ export async function POST(
   // Check if summary already exists
   const { data: work } = await supabase
     .from("works")
-    .select("summary, ai_tags, open_access_url")
+    .select("ai_summary, open_access_url")
     .eq("id", id)
     .single();
 
@@ -36,11 +36,10 @@ export async function POST(
     return NextResponse.json({ error: "Paper not found" }, { status: 404 });
   }
 
-  if (work.summary) {
+  if (work.ai_summary) {
     return NextResponse.json({
       status: "completed",
-      summary: work.summary,
-      ai_tags: work.ai_tags,
+      ai_summary: work.ai_summary,
     });
   }
 
@@ -104,14 +103,13 @@ export async function GET(
   // Get summary from works table if completed
   const { data: work } = await supabase
     .from("works")
-    .select("summary, ai_tags")
+    .select("ai_summary")
     .eq("id", id)
     .single();
 
   return NextResponse.json({
-    status: work?.summary ? "completed" : (job?.status ?? "none"),
-    summary: work?.summary ?? null,
-    ai_tags: work?.ai_tags ?? null,
+    status: work?.ai_summary ? "completed" : (job?.status ?? "none"),
+    ai_summary: work?.ai_summary ?? null,
     error: job?.error ?? null,
   });
 }

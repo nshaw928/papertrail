@@ -77,20 +77,6 @@ export default function PaperCard({ paper }: PaperCardProps) {
             )}
           </div>
         </div>
-
-        {paper.ai_tags && paper.ai_tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {paper.ai_tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="text-xs border-violet-500/50 text-violet-600 dark:text-violet-400"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

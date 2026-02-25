@@ -15,16 +15,7 @@ data:
       system: |
         You are a research paper summarizer. Produce concise, accurate summaries.
       user: |
-        Summarize the following academic paper:
-        1. A 2-3 paragraph summary covering key contributions, methodology, and findings.
-        2. A JSON array of 3-8 descriptive tags.
-
-        Format:
-        SUMMARY:
-        <paragraphs>
-
-        TAGS:
-        ["tag1", "tag2", ...]
+        Summarize the following academic paper in a single paragraph covering the key contributions, methodology, and findings.
 
         Paper text:
         {text}

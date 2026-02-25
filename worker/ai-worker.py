@@ -5,7 +5,6 @@ Runs on homelab K8s alongside Ollama. Uses service role key to bypass RLS.
 """
 
 import ipaddress
-import json
 import logging
 import os
 import socket
@@ -139,8 +138,8 @@ def get_text_for_work(work_id: str, source_url: str | None) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def call_ollama(text: str) -> dict:
-    """Call Ollama with the summary prompt. Returns {"summary": ..., "tags": [...]}."""
+def call_ollama(text: str) -> str:
+    """Call Ollama with the summary prompt and return the summary text."""
     prompt_config = PROMPTS["summary"]
     user_prompt = prompt_config["user"].replace("{text}", text)
 
@@ -156,45 +155,11 @@ def call_ollama(text: str) -> dict:
     resp = requests.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload, timeout=300)
     resp.raise_for_status()
 
-    content = resp.json()["message"]["content"]
-    return parse_llm_response(content)
-
-
-def parse_llm_response(content: str) -> dict:
-    """Parse the LLM response to extract summary and tags."""
-    summary = ""
-    tags = []
-
-    # Split on TAGS: marker
-    if "TAGS:" in content:
-        parts = content.split("TAGS:", 1)
-        summary_part = parts[0]
-        tags_part = parts[1].strip()
-
-        # Remove SUMMARY: prefix if present
-        if "SUMMARY:" in summary_part:
-            summary_part = summary_part.split("SUMMARY:", 1)[1]
-        summary = summary_part.strip()
-
-        # Parse JSON array from tags section
-        try:
-            # Find the JSON array in the tags section
-            bracket_start = tags_part.index("[")
-            bracket_end = tags_part.index("]") + 1
-            tags = json.loads(tags_part[bracket_start:bracket_end])
-        except (ValueError, json.JSONDecodeError):
-            log.warning("Failed to parse tags JSON, attempting line-by-line")
-            tags = [line.strip().strip("-").strip() for line in tags_part.splitlines() if line.strip()]
-    else:
-        # No TAGS marker — treat entire content as summary
-        if "SUMMARY:" in content:
-            content = content.split("SUMMARY:", 1)[1]
-        summary = content.strip()
-
-    # Ensure tags are strings and reasonable
-    tags = [str(t).strip() for t in tags if isinstance(t, str) and t.strip()][:8]
-
-    return {"summary": summary, "tags": tags}
+    content = resp.json()["message"]["content"].strip()
+    # Strip prefix in case the model echoes back a label
+    if content.upper().startswith("SUMMARY:"):
+        content = content[len("SUMMARY:"):].strip()
+    return content
 
 
 # ---------------------------------------------------------------------------
@@ -249,13 +214,12 @@ def process_job(job: dict) -> None:
         if not text:
             raise ValueError("No text available for summarization")
 
-        result = call_ollama(text)
+        summary = call_ollama(text)
 
         # Update works table
         db.table("works").update({
-            "summary": result["summary"],
-            "ai_tags": result["tags"],
-            "summary_generated": True,
+            "ai_summary": summary,
+            "ai_summary_generated": True,
         }).eq("id", work_id).execute()
 
         # Mark job completed
@@ -264,8 +228,7 @@ def process_job(job: dict) -> None:
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }).eq("id", job_id).execute()
 
-        log.info("Completed job %s — summary: %d chars, tags: %s",
-                 job_id, len(result["summary"]), result["tags"])
+        log.info("Completed job %s — summary: %d chars", job_id, len(summary))
 
     except Exception as e:
         log.error("Job %s failed: %s", job_id, e)
@@ -286,8 +249,8 @@ def enqueue_batch_jobs() -> int:
     result = (
         db.table("works")
         .select("id, open_access_url")
-        .is_("summary", "null")
-        .is_("summary_generated", "null")
+        .is_("ai_summary", "null")
+        .is_("ai_summary_generated", "null")
         .not_.is_("abstract", "null")
         .limit(10)
         .execute()

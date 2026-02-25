@@ -234,9 +234,9 @@ export default async function PaperPage({ params }: PageProps) {
       {/* AI Summary */}
       <AISummarySection
         workId={id}
-        initialSummary={paper.summary}
-        initialTags={Array.isArray(paper.ai_tags) ? paper.ai_tags as string[] : null}
+        initialSummary={paper.ai_summary}
         canGenerate={canGenerate}
+        hasText={!!(paper.abstract || paper.open_access_url)}
       />
 
       {/* Details (expandable metadata) */}

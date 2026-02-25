@@ -29,8 +29,7 @@ export interface WorkWithRelations {
   is_stub: boolean | null;
   source_id: string | null;
   source_display_name: string | null;
-  summary: string | null;
-  ai_tags: string[] | null;
+  ai_summary: string | null;
   citations_fetched: boolean | null;
   authors: {
     id: string;
@@ -106,7 +105,6 @@ export interface PlanLimits {
   savedPapers: number | null;
   collections: number | null;
   aiSummariesOnDemand: boolean;
-  aiTags: boolean;
   exportEnabled: boolean;
   citationGraphHops: number;
 }
