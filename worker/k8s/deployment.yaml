@@ -20,7 +20,8 @@ spec:
         fsGroup: 1000
       containers:
         - name: worker
-          image: papertrail-ai-worker:latest
+          image: ghcr.io/nshaw928/papertrail/ai-worker:latest
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: papertrail-ai-worker
