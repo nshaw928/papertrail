@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/supabase/server";
 import { getUserLab, loadLabCollections } from "@/lib/supabase/labs";
-import CreateLabForm from "./create-lab-form";
+import LabLanding from "./lab-landing";
 import LabDashboard from "./lab-dashboard";
 
 export default async function LabPage() {
@@ -8,15 +8,33 @@ export default async function LabPage() {
   const lab = await getUserLab(supabase, user.id);
 
   if (!lab) {
+    // Fetch pending invitations for this user
+    const { data: invitations } = await supabase
+      .from("lab_invitations")
+      .select("id, lab_id, role")
+      .eq("email", user.email!.toLowerCase())
+      .gt("expires_at", new Date().toISOString());
+
+    const labIds = [...new Set((invitations ?? []).map((inv) => inv.lab_id))];
+    const { data: labs } =
+      labIds.length > 0
+        ? await supabase.from("labs").select("id, name").in("id", labIds)
+        : { data: [] as { id: string; name: string }[] };
+
+    const labMap = new Map((labs ?? []).map((l) => [l.id, l.name]));
+
+    const pendingInvitations = (invitations ?? []).map((inv) => ({
+      id: inv.id,
+      lab_id: inv.lab_id,
+      lab_name: labMap.get(inv.lab_id) ?? "",
+      role: inv.role,
+    }));
+
     return (
-      <div className="space-y-6 max-w-2xl">
-        <h1 className="text-3xl font-bold tracking-tight">Lab</h1>
-        <p className="text-muted-foreground">
-          Create a lab to collaborate with your research group. Share collections,
-          see what your colleagues are reading, and manage access.
-        </p>
-        <CreateLabForm />
-      </div>
+      <LabLanding
+        invitations={pendingInvitations}
+        userEmail={user.email ?? ""}
+      />
     );
   }
 
