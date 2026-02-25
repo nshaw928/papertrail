@@ -1,3 +1,11 @@
+export interface TopicNode {
+  id: string;
+  name: string;
+  level: number;
+  parent_topic_id: string | null;
+  works_count: number | null;
+}
+
 export interface GraphNode {
   id: string;
   label: string;

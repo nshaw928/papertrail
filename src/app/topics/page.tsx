@@ -1,19 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
-import TopicGrid from "@/components/topic-grid";
+import TopicsViewToggle from "@/components/topics-view-toggle";
 
 export default async function TopicsPage() {
   const supabase = await createClient();
 
-  // Get domain-level topics (level 0) with paper counts
-  const { data: topics } = await supabase
+  // Get domain-level topics (level 0) with paper counts for grid view
+  const { data: domainTopics } = await supabase
     .from("topics")
     .select("id, name, level, works_count")
     .eq("level", 0)
     .order("works_count", { ascending: false });
 
-  // For each domain, count papers via work_topics
-  const topicsWithCounts = await Promise.all(
-    (topics ?? []).map(async (topic) => {
+  const gridTopics = await Promise.all(
+    (domainTopics ?? []).map(async (topic) => {
       const { count } = await supabase
         .from("work_topics")
         .select("*", { count: "exact", head: true })
@@ -21,6 +20,13 @@ export default async function TopicsPage() {
       return { ...topic, paper_count: count ?? 0 };
     })
   );
+
+  // Get all topics with works for graph view (lightweight, no joins)
+  const { data: allTopics } = await supabase
+    .from("topics")
+    .select("id, name, level, parent_topic_id, works_count")
+    .gt("works_count", 0)
+    .order("level", { ascending: true });
 
   return (
     <div className="space-y-6">
@@ -32,8 +38,11 @@ export default async function TopicsPage() {
         </p>
       </div>
 
-      {topicsWithCounts.length > 0 ? (
-        <TopicGrid topics={topicsWithCounts} />
+      {gridTopics.length > 0 ? (
+        <TopicsViewToggle
+          gridTopics={gridTopics}
+          allTopics={allTopics ?? []}
+        />
       ) : (
         <p className="text-muted-foreground">
           No topics yet. Search for papers to start populating topics.

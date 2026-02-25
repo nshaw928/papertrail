@@ -4,15 +4,9 @@ import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { GraphData } from "@/lib/types/app";
 import cytoscape from "cytoscape";
+import { ensureCoseBilkent } from "@/lib/cytoscape-setup";
 
-// @ts-expect-error - no types for this layout extension
-import coseBilkent from "cytoscape-cose-bilkent";
-
-let layoutRegistered = false;
-if (!layoutRegistered) {
-  cytoscape.use(coseBilkent);
-  layoutRegistered = true;
-}
+ensureCoseBilkent();
 
 interface CitationGraphProps {
   data: GraphData;
