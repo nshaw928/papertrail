@@ -11,7 +11,8 @@ import { getOrFetchWork } from "@/lib/openalex/get-or-fetch";
 import { getUserPlan } from "@/lib/supabase/plans";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
-import { fetchCitations, fetchCitedBy } from "@/lib/semantic-scholar/client";
+import { enrichCitations } from "@/lib/openalex/enrich-citations";
+import { hydrateStubs } from "@/lib/openalex/hydrate";
 import { isSafeUrl, levelName } from "@/lib/utils";
 import type { WorkWithRelations } from "@/lib/types/app";
 
@@ -67,46 +68,42 @@ export default async function PaperPage({ params }: PageProps) {
   }
 
   // Enrich citations from Semantic Scholar if not yet fetched
-  if (!paper.citations_fetched) {
+  try {
+    await enrichCitations(admin, id);
+  } catch (e) {
+    console.error(`Enrichment failed for ${id}:`, e);
+  }
+
+  // Load reference IDs and cited-by IDs
+  const [{ data: refLinks }, { data: citedByLinks, count: citedByTotal }] =
+    await Promise.all([
+      supabase
+        .from("work_citations")
+        .select("cited_work_id")
+        .eq("citing_work_id", id),
+      supabase
+        .from("work_citations")
+        .select("citing_work_id", { count: "exact" })
+        .eq("cited_work_id", id)
+        .limit(20),
+    ]);
+
+  const refIds = refLinks?.map((l) => l.cited_work_id) ?? [];
+  const displayedCitedByIds = citedByLinks?.map((l) => l.citing_work_id) ?? [];
+
+  // Hydrate displayed stubs so users see real titles/authors
+  const idsToHydrate = [...refIds, ...displayedCitedByIds];
+  if (idsToHydrate.length > 0) {
     try {
-      const [citedIds, citingIds] = await Promise.all([
-        fetchCitations(id),
-        fetchCitedBy(id),
-      ]);
-
-      if (citedIds.length > 0) {
-        const stubs = citedIds.map((cid) => ({ id: cid, title: "Unknown", is_stub: true }));
-        await admin.from("works").upsert(stubs, { onConflict: "id", ignoreDuplicates: true });
-        const edges = citedIds.map((cid) => ({ citing_work_id: id, cited_work_id: cid }));
-        await admin.from("work_citations").upsert(edges, {
-          onConflict: "citing_work_id,cited_work_id", ignoreDuplicates: true,
-        });
-      }
-
-      if (citingIds.length > 0) {
-        const stubs = citingIds.map((cid) => ({ id: cid, title: "Unknown", is_stub: true }));
-        await admin.from("works").upsert(stubs, { onConflict: "id", ignoreDuplicates: true });
-        const edges = citingIds.map((cid) => ({ citing_work_id: cid, cited_work_id: id }));
-        await admin.from("work_citations").upsert(edges, {
-          onConflict: "citing_work_id,cited_work_id", ignoreDuplicates: true,
-        });
-      }
-
-      await admin.from("works").update({ citations_fetched: true }).eq("id", id);
+      await hydrateStubs(admin, idsToHydrate);
     } catch (e) {
-      console.error(`Enrichment failed for ${id}:`, e);
+      console.error(`Hydration failed for ${id}:`, e);
     }
   }
 
-  // Load references (this paper cites)
-  const { data: refLinks } = await supabase
-    .from("work_citations")
-    .select("cited_work_id")
-    .eq("citing_work_id", id);
-
+  // Load full work rows for display
   let references: WorkWithRelations[] = [];
-  if (refLinks?.length) {
-    const refIds = refLinks.map((l) => l.cited_work_id);
+  if (refIds.length > 0) {
     const { data: refWorks } = await supabase
       .from("works")
       .select("*")
@@ -116,23 +113,32 @@ export default async function PaperPage({ params }: PageProps) {
     });
   }
 
-  // Load cited by (papers citing this one) — limit 20
-  const { data: citedByLinks, count: citedByTotal } = await supabase
-    .from("work_citations")
-    .select("citing_work_id", { count: "exact" })
-    .eq("cited_work_id", id)
-    .limit(20);
-
   let citedBy: WorkWithRelations[] = [];
-  if (citedByLinks?.length) {
-    const citingIds = citedByLinks.map((l) => l.citing_work_id);
+  if (displayedCitedByIds.length > 0) {
     const { data: citingWorks } = await supabase
       .from("works")
       .select("*")
-      .in("id", citingIds);
+      .in("id", displayedCitedByIds);
     citedBy = await loadWorksWithRelations(supabase, citingWorks ?? [], {
       userId: user?.id,
     });
+  }
+
+  // Background-hydrate remaining cited-by stubs beyond the displayed 20
+  if ((citedByTotal ?? 0) > 20) {
+    const { data: allCitedByLinks } = await admin
+      .from("work_citations")
+      .select("citing_work_id")
+      .eq("cited_work_id", id);
+    const allCitedByIds = allCitedByLinks?.map((l) => l.citing_work_id) ?? [];
+    const displayedSet = new Set(displayedCitedByIds);
+    const remainingIds = allCitedByIds.filter((cid) => !displayedSet.has(cid));
+    if (remainingIds.length > 0) {
+      // Fire-and-forget background hydration
+      hydrateStubs(admin, remainingIds).catch((e) =>
+        console.error(`Background hydration failed for ${id}:`, e)
+      );
+    }
   }
 
   const { authors, topics } = paper;

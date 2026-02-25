@@ -2,8 +2,13 @@ const OPENALEX_BASE = "https://api.openalex.org";
 
 function buildParams(): Record<string, string> {
   const params: Record<string, string> = {};
-  const email = process.env.OPENALEX_EMAIL;
-  if (email) params.mailto = email;
+  const apiKey = process.env.OPENALEX_API_KEY;
+  if (apiKey) {
+    params.api_key = apiKey;
+  } else {
+    const email = process.env.OPENALEX_EMAIL;
+    if (email) params.mailto = email;
+  }
   return params;
 }
 
@@ -81,7 +86,7 @@ export async function batchGetWorks(
   if (ids.length === 0) return [];
   const params = buildParams();
   params.filter = `openalex:${ids.join("|")}`;
-  params.per_page = String(Math.min(ids.length, 50));
+  params.per_page = String(Math.min(ids.length, 100));
 
   const resp = await fetch(`${OPENALEX_BASE}/works?${toQueryString(params)}`, {
     next: { revalidate: 0 },
