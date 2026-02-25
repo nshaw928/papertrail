@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe, PRICE_IDS } from "@/lib/stripe/client";
+import { getStripe, PRICE_IDS } from "@/lib/stripe/client";
 import { requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireLabRole } from "@/lib/supabase/labs";
@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
     billing: "monthly" | "yearly";
     labId?: string;
   };
+
+  const stripe = getStripe();
 
   if (!plan || !billing) {
     return NextResponse.json({ error: "Missing plan or billing" }, { status: 400 });

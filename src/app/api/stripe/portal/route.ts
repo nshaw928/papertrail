@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe/client";
+import { getStripe } from "@/lib/stripe/client";
 import { requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No subscription found" }, { status: 404 });
   }
 
+  const stripe = getStripe();
   const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
 
   const session = await stripe.billingPortal.sessions.create({
