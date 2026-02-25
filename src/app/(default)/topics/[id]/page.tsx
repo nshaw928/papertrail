@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import TopicGrid from "@/components/topic-grid";
+import Link from "next/link";
 import PaperCard from "@/components/paper-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { levelName } from "@/lib/utils";
 import type { WorkWithRelations } from "@/lib/types/app";
@@ -130,10 +131,28 @@ export default async function TopicPage({ params }: PageProps) {
       </div>
 
       {(children?.length ?? 0) > 0 && (
-        <TopicGrid
-          topics={children ?? []}
-          title="Sub-categories"
-        />
+        <div>
+          <h2 className="mb-4 text-lg font-semibold">Sub-categories</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {(children ?? []).map((child) => (
+              <Link key={child.id} href={`/topics/${child.id}`}>
+                <Card className="transition-colors hover:bg-accent/50 h-full">
+                  <CardContent className="p-4">
+                    <h3 className="font-medium leading-snug">{child.name}</h3>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {levelName(child.level)}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {(child.works_count ?? 0).toLocaleString()} papers
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {papers.length > 0 && (
