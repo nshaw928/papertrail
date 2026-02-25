@@ -3,12 +3,14 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import SaveButton from "@/components/save-button";
-import CitationGraphWrapper from "./citation-graph-wrapper";
+import CitationColumns from "@/components/citation-columns";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrFetchWork } from "@/lib/openalex/get-or-fetch";
+import { loadWorksWithRelations } from "@/lib/supabase/queries";
+import { fetchCitations, fetchCitedBy } from "@/lib/semantic-scholar/client";
 import { isSafeUrl, levelName } from "@/lib/utils";
-import type { GraphData } from "@/lib/types/app";
+import type { WorkWithRelations } from "@/lib/types/app";
 
 function TopicBadges({ topics }: { topics: { id: string; name: string; score: number | null }[] }) {
   if (topics.length === 0) return null;
@@ -42,13 +44,6 @@ export default async function PaperPage({ params }: PageProps) {
   const paper = await getOrFetchWork(id, supabase, admin);
   if (!paper) notFound();
 
-  // Load citation graph via RPC
-  const { data: graphData } = await supabase.rpc("get_citation_graph", {
-    target_work_id: id,
-    max_nodes: 40,
-  });
-  const graph = graphData as unknown as GraphData | null;
-
   // Check saved status
   const {
     data: { user },
@@ -64,15 +59,73 @@ export default async function PaperPage({ params }: PageProps) {
     isSaved = !!saved;
   }
 
-  // Fire non-blocking enrichment if needed
+  // Enrich citations from Semantic Scholar if not yet fetched
   if (!paper.citations_fetched) {
-    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      ? undefined
-      : "http://localhost:3000";
-    fetch(
-      `${baseUrl ?? ""}/api/papers/${id}/enrich`,
-      { method: "POST" }
-    ).catch(() => {});
+    try {
+      const [citedIds, citingIds] = await Promise.all([
+        fetchCitations(id),
+        fetchCitedBy(id),
+      ]);
+
+      if (citedIds.length > 0) {
+        const stubs = citedIds.map((cid) => ({ id: cid, title: "Unknown", is_stub: true }));
+        await admin.from("works").upsert(stubs, { onConflict: "id", ignoreDuplicates: true });
+        const edges = citedIds.map((cid) => ({ citing_work_id: id, cited_work_id: cid }));
+        await admin.from("work_citations").upsert(edges, {
+          onConflict: "citing_work_id,cited_work_id", ignoreDuplicates: true,
+        });
+      }
+
+      if (citingIds.length > 0) {
+        const stubs = citingIds.map((cid) => ({ id: cid, title: "Unknown", is_stub: true }));
+        await admin.from("works").upsert(stubs, { onConflict: "id", ignoreDuplicates: true });
+        const edges = citingIds.map((cid) => ({ citing_work_id: cid, cited_work_id: id }));
+        await admin.from("work_citations").upsert(edges, {
+          onConflict: "citing_work_id,cited_work_id", ignoreDuplicates: true,
+        });
+      }
+
+      await admin.from("works").update({ citations_fetched: true }).eq("id", id);
+    } catch (e) {
+      console.error(`Enrichment failed for ${id}:`, e);
+    }
+  }
+
+  // Load references (this paper cites)
+  const { data: refLinks } = await supabase
+    .from("work_citations")
+    .select("cited_work_id")
+    .eq("citing_work_id", id);
+
+  let references: WorkWithRelations[] = [];
+  if (refLinks?.length) {
+    const refIds = refLinks.map((l) => l.cited_work_id);
+    const { data: refWorks } = await supabase
+      .from("works")
+      .select("*")
+      .in("id", refIds);
+    references = await loadWorksWithRelations(supabase, refWorks ?? [], {
+      userId: user?.id,
+    });
+  }
+
+  // Load cited by (papers citing this one) — limit 20
+  const { data: citedByLinks, count: citedByTotal } = await supabase
+    .from("work_citations")
+    .select("citing_work_id", { count: "exact" })
+    .eq("cited_work_id", id)
+    .limit(20);
+
+  let citedBy: WorkWithRelations[] = [];
+  if (citedByLinks?.length) {
+    const citingIds = citedByLinks.map((l) => l.citing_work_id);
+    const { data: citingWorks } = await supabase
+      .from("works")
+      .select("*")
+      .in("id", citingIds);
+    citedBy = await loadWorksWithRelations(supabase, citingWorks ?? [], {
+      userId: user?.id,
+    });
   }
 
   const { authors, topics } = paper;
@@ -214,11 +267,16 @@ export default async function PaperPage({ params }: PageProps) {
         </details>
       )}
 
-      {/* Citation Graph */}
-      {graph && graph.nodes && graph.nodes.length > 1 && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Citation Graph</h2>
-          <CitationGraphWrapper data={graph} centerId={id} />
+      {/* Citations */}
+      {(references.length > 0 || citedBy.length > 0) && (
+        <section className="space-y-4">
+          <Separator />
+          <h2 className="text-lg font-semibold">Citations</h2>
+          <CitationColumns
+            references={references}
+            citedBy={citedBy}
+            citedByTotal={citedByTotal ?? 0}
+          />
         </section>
       )}
     </div>
