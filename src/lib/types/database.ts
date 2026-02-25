@@ -47,6 +47,63 @@ export type Database = {
           },
         ]
       }
+      collection_works: {
+        Row: {
+          added_at: string | null
+          collection_id: string
+          work_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          collection_id: string
+          work_id: string
+        }
+        Update: {
+          added_at?: string | null
+          collection_id?: string
+          work_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_works_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_works_work_id_fkey"
+            columns: ["work_id"]
+            isOneToOne: false
+            referencedRelation: "works"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       authors: {
         Row: {
           cited_by_count: number | null

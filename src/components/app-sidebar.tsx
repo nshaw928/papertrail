@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
   Search,
@@ -11,6 +11,10 @@ import {
   LogOut,
   Settings,
   User as UserIcon,
+  FolderOpen,
+  Plus,
+  ChevronRight,
+  Waypoints,
 } from "lucide-react";
 import {
   Sidebar,
@@ -18,12 +22,21 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,14 +47,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/app/(auth)/actions";
 
-const navItems = [
-  { href: "/", label: "Search", icon: Search },
-  { href: "/graph", label: "Graph", icon: Network },
-  { href: "/library", label: "Library", icon: BookOpen },
-];
+interface AppSidebarProps {
+  user: User | null;
+  collections: { id: string; name: string }[];
+}
 
-export default function AppSidebar({ user }: { user: User | null }) {
+export default function AppSidebar({ user, collections }: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleNewCollection() {
+    const name = prompt("Collection name:");
+    if (!name?.trim()) return;
+    const res = await fetch("/api/collections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    if (res.ok) {
+      const collection = await res.json();
+      router.push(`/library/collections/${collection.id}`);
+      router.refresh();
+    }
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -64,26 +92,111 @@ export default function AppSidebar({ user }: { user: User | null }) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      item.href === "/"
-                        ? pathname === "/"
-                        : pathname.startsWith(item.href)
-                    }
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/"}>
+                  <Link href="/">
+                    <Search />
+                    <span>Search</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/graph"}
+                >
+                  <Link href="/graph">
+                    <Network />
+                    <span>Graph</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarSeparator />
+
+        {user && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Library</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/library"}
+                  >
+                    <Link href="/library">
+                      <BookOpen />
+                      <span>All Papers</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === "/library/graph"}
+                  >
+                    <Link href="/library/graph">
+                      <Waypoints />
+                      <span>My Graph</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {collections.length > 0 && (
+                  <Collapsible defaultOpen className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <FolderOpen />
+                          <span>Collections</span>
+                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {collections.map((c) => (
+                            <SidebarMenuSubItem key={c.id}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={pathname === `/library/collections/${c.id}`}
+                              >
+                                <Link href={`/library/collections/${c.id}`}>
+                                  {c.name}
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              onClick={handleNewCollection}
+                              className="text-muted-foreground"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span>New</span>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )}
+                {collections.length === 0 && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={handleNewCollection}
+                      className="text-muted-foreground"
+                    >
+                      <Plus />
+                      <span>New Collection</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>

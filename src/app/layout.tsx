@@ -30,13 +30,23 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  const collections = user
+    ? ((
+        await supabase
+          .from("collections")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .order("name")
+      ).data ?? [])
+    : [];
+
   return (
     <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarProvider>
-          <AppSidebar user={user} />
+          <AppSidebar user={user} collections={collections} />
           <SidebarInset>
             <header className="flex h-12 shrink-0 items-center border-b px-4">
               <SidebarTrigger className="-ml-1" />

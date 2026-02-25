@@ -56,6 +56,29 @@ export interface SearchResult {
   per_page: number;
 }
 
+export interface Collection {
+  id: string;
+  name: string;
+  created_at: string;
+  work_count?: number;
+}
+
+export interface LibraryGraphData {
+  nodes: Array<{
+    id: string;
+    label: string;
+    type: "paper" | "topic";
+    level?: number;
+    year?: number | null;
+    cited_by_count?: number;
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    type: "has_topic" | "cites" | "topic_parent";
+  }>;
+}
+
 export interface TopicWithChildren {
   id: string;
   name: string;

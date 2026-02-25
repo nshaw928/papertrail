@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { WorkWithRelations } from "@/lib/types/app";
+import type { WorkWithRelations, LibraryGraphData } from "@/lib/types/app";
 
 /**
  * Batch-load authors and topics for a list of work rows,
@@ -121,4 +121,141 @@ export async function loadWorksWithRelations(
       ...(opts?.userId !== undefined ? { is_saved: savedIds.has(wid) } : {}),
     } as WorkWithRelations;
   });
+}
+
+/**
+ * Build graph data for a user's saved papers:
+ * paper nodes, topic nodes (with parent chain), citation edges, topic edges.
+ */
+export async function loadLibraryGraphData(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<LibraryGraphData> {
+  // 1. Get saved work IDs
+  const { data: savedRows } = await supabase
+    .from("saved_works")
+    .select("work_id")
+    .eq("user_id", userId);
+
+  const savedWorkIds = savedRows?.map((r) => r.work_id) ?? [];
+  if (savedWorkIds.length === 0) {
+    return { nodes: [], edges: [] };
+  }
+
+  // 2. Get work details for paper nodes
+  const { data: works } = await supabase
+    .from("works")
+    .select("id, title, year, cited_by_count")
+    .in("id", savedWorkIds);
+
+  const nodes: LibraryGraphData["nodes"] = (works ?? []).map((w) => ({
+    id: w.id,
+    label: w.title ?? "Untitled",
+    type: "paper" as const,
+    year: w.year,
+    cited_by_count: w.cited_by_count ?? 0,
+  }));
+
+  const edges: LibraryGraphData["edges"] = [];
+
+  // 3. Get topic links for saved works
+  const { data: topicLinks } = await supabase
+    .from("work_topics")
+    .select("work_id, topic_id")
+    .in("work_id", savedWorkIds);
+
+  const topicIds = new Set<string>();
+  for (const link of topicLinks ?? []) {
+    topicIds.add(link.topic_id);
+    edges.push({
+      source: link.work_id,
+      target: link.topic_id,
+      type: "has_topic",
+    });
+  }
+
+  // 4. Get topics and walk parent chain (max 4 levels)
+  const allTopicIds = new Set(topicIds);
+  let currentIds = [...topicIds];
+
+  for (let i = 0; i < 4 && currentIds.length > 0; i++) {
+    const { data: topicRows } = await supabase
+      .from("topics")
+      .select("id, name, level, parent_topic_id")
+      .in("id", currentIds);
+
+    const nextIds: string[] = [];
+    for (const t of topicRows ?? []) {
+      if (!nodes.some((n) => n.id === t.id)) {
+        nodes.push({
+          id: t.id,
+          label: t.name,
+          type: "topic",
+          level: t.level,
+        });
+      }
+      if (t.parent_topic_id && !allTopicIds.has(t.parent_topic_id)) {
+        allTopicIds.add(t.parent_topic_id);
+        nextIds.push(t.parent_topic_id);
+        edges.push({
+          source: t.parent_topic_id,
+          target: t.id,
+          type: "topic_parent",
+        });
+      } else if (t.parent_topic_id && allTopicIds.has(t.parent_topic_id)) {
+        // Parent already loaded — just add the edge if not duplicate
+        if (
+          !edges.some(
+            (e) =>
+              e.source === t.parent_topic_id &&
+              e.target === t.id &&
+              e.type === "topic_parent"
+          )
+        ) {
+          edges.push({
+            source: t.parent_topic_id,
+            target: t.id,
+            type: "topic_parent",
+          });
+        }
+      }
+    }
+    currentIds = nextIds;
+  }
+
+  // Fetch any remaining parent topics that were added in the last iteration
+  if (currentIds.length > 0) {
+    const { data: topicRows } = await supabase
+      .from("topics")
+      .select("id, name, level")
+      .in("id", currentIds);
+
+    for (const t of topicRows ?? []) {
+      if (!nodes.some((n) => n.id === t.id)) {
+        nodes.push({
+          id: t.id,
+          label: t.name,
+          type: "topic",
+          level: t.level,
+        });
+      }
+    }
+  }
+
+  // 5. Citation edges (both ends in saved set)
+  const { data: citations } = await supabase
+    .from("work_citations")
+    .select("citing_work_id, cited_work_id")
+    .in("citing_work_id", savedWorkIds)
+    .in("cited_work_id", savedWorkIds);
+
+  for (const c of citations ?? []) {
+    edges.push({
+      source: c.citing_work_id,
+      target: c.cited_work_id,
+      type: "cites",
+    });
+  }
+
+  return { nodes, edges };
 }

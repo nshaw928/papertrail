@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import SaveButton from "./save-button";
+import AddToCollection from "./add-to-collection";
 import type { WorkWithRelations } from "@/lib/types/app";
 
 interface PaperCardProps {
@@ -19,11 +20,14 @@ export default function PaperCard({ paper }: PaperCardProps) {
           >
             {paper.title}
           </Link>
-          <SaveButton
-            workId={paper.id}
-            initialSaved={paper.is_saved}
-            size="sm"
-          />
+          <div className="flex items-center gap-1">
+            <AddToCollection workId={paper.id} />
+            <SaveButton
+              workId={paper.id}
+              initialSaved={paper.is_saved}
+              size="sm"
+            />
+          </div>
         </div>
 
         <p className="mt-1 text-sm text-muted-foreground">
