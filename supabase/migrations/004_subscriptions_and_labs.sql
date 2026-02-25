@@ -64,12 +64,6 @@ create trigger trg_labs_updated_at before update on labs
 
 alter table labs enable row level security;
 
--- Lab members can read their lab
-create policy "Lab members read lab" on labs for select
-  using (
-    id in (select lab_id from lab_members where user_id = auth.uid())
-  );
-
 -- Lab owners can update their lab
 create policy "Lab owners update lab" on labs for update
   using (owner_id = auth.uid())
@@ -98,6 +92,12 @@ create index idx_lab_members_user on lab_members(user_id);
 create index idx_lab_members_email on lab_members(invited_email);
 
 alter table lab_members enable row level security;
+
+-- Deferred: labs read policy (requires lab_members to exist)
+create policy "Lab members read lab" on labs for select
+  using (
+    id in (select lab_id from lab_members where user_id = auth.uid())
+  );
 
 -- Lab members can see other members in their lab
 create policy "Lab members read members" on lab_members for select
