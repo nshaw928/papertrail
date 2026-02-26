@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pin, Trash2, UserPlus } from "lucide-react";
+import { Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,19 +29,12 @@ interface LabDashboardProps {
     created_at: string | null;
     expires_at: string | null;
   }[];
-  sharedCollections: {
-    id: string;
-    name: string;
-    user_id: string;
-    pinned: boolean;
-  }[];
 }
 
 export default function LabDashboard({
   lab,
   members,
   invitations,
-  sharedCollections,
 }: LabDashboardProps) {
   const router = useRouter();
   const isAdmin = lab.role === "owner" || lab.role === "admin";
@@ -129,66 +122,6 @@ export default function LabDashboard({
           )}
 
           {isAdmin && <InviteForm labId={lab.id} />}
-        </CardContent>
-      </Card>
-
-      {/* Shared Collections */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Shared Collections</CardTitle>
-          <CardDescription>
-            Collections shared with the lab.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sharedCollections.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No collections shared yet. Share a collection from your library.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {sharedCollections.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between py-2"
-                >
-                  <span className="text-sm">{c.name}</span>
-                  <div className="flex items-center gap-2">
-                    {c.pinned && (
-                      <Badge variant="secondary">
-                        <Pin className="h-3 w-3 mr-1" />
-                        Pinned
-                      </Badge>
-                    )}
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(`/api/labs/${lab.id}/collections`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                collectionId: c.id,
-                                pinned: !c.pinned,
-                              }),
-                            });
-                            if (!res.ok) console.error("Failed to update pin");
-                          } catch {
-                            console.error("Failed to update pin");
-                          }
-                          router.refresh();
-                        }}
-                      >
-                        {c.pinned ? "Unpin" : "Pin"}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

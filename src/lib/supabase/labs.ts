@@ -51,40 +51,6 @@ export async function getUserLab(
   };
 }
 
-/**
- * Load shared collections for a lab, with collection details fetched separately
- * to avoid `as unknown as` casts from Supabase joins.
- */
-export async function loadLabCollections(
-  supabase: SupabaseClient,
-  labId: string
-): Promise<{ id: string; name: string; user_id: string; pinned: boolean }[]> {
-  const { data: sharedRaw } = await supabase
-    .from("lab_collections")
-    .select("collection_id, pinned")
-    .eq("lab_id", labId) as { data: { collection_id: string; pinned: boolean | null }[] | null };
-
-  const collectionIds = (sharedRaw ?? []).map((sc) => sc.collection_id);
-  if (collectionIds.length === 0) return [];
-
-  const { data: details } = await supabase
-    .from("collections")
-    .select("id, name, user_id")
-    .in("id", collectionIds);
-
-  const detailMap = new Map(
-    (details ?? []).map((c) => [c.id, c])
-  );
-
-  return (sharedRaw ?? [])
-    .map((sc) => {
-      const c = detailMap.get(sc.collection_id);
-      if (!c) return null;
-      return { id: c.id, name: c.name, user_id: c.user_id, pinned: sc.pinned ?? false };
-    })
-    .filter((c): c is NonNullable<typeof c> => c !== null);
-}
-
 const VALID_INVITE_ROLES = ["member", "admin"] as const;
 type InviteRole = (typeof VALID_INVITE_ROLES)[number];
 

@@ -134,7 +134,6 @@ export type Database = {
           name: string
           updated_at: string | null
           user_id: string
-          visibility: Database["public"]["Enums"]["collection_visibility"]
         }
         Insert: {
           created_at?: string | null
@@ -142,7 +141,6 @@ export type Database = {
           name: string
           updated_at?: string | null
           user_id: string
-          visibility?: Database["public"]["Enums"]["collection_visibility"]
         }
         Update: {
           created_at?: string | null
@@ -150,7 +148,6 @@ export type Database = {
           name?: string
           updated_at?: string | null
           user_id?: string
-          visibility?: Database["public"]["Enums"]["collection_visibility"]
         }
         Relationships: []
       }
@@ -628,48 +625,6 @@ export type Database = {
           },
         ]
       }
-      lab_collections: {
-      Row: {
-        lab_id: string
-        collection_id: string
-        pinned: boolean | null
-        pinned_by: string | null
-        pinned_at: string | null
-        shared_at: string | null
-      }
-      Insert: {
-        lab_id: string
-        collection_id: string
-        pinned?: boolean | null
-        pinned_by?: string | null
-        pinned_at?: string | null
-        shared_at?: string | null
-      }
-      Update: {
-        lab_id?: string
-        collection_id?: string
-        pinned?: boolean | null
-        pinned_by?: string | null
-        pinned_at?: string | null
-        shared_at?: string | null
-      }
-      Relationships: [
-        {
-          foreignKeyName: "lab_collections_lab_id_fkey"
-          columns: ["lab_id"]
-          isOneToOne: false
-          referencedRelation: "labs"
-          referencedColumns: ["id"]
-        },
-        {
-          foreignKeyName: "lab_collections_collection_id_fkey"
-          columns: ["collection_id"]
-          isOneToOne: false
-          referencedRelation: "collections"
-          referencedColumns: ["id"]
-        },
-      ]
-    }
     lab_invitations: {
       Row: {
         id: string
@@ -871,7 +826,6 @@ export type Database = {
       plan_type: "free" | "researcher" | "lab"
       subscription_status: "active" | "canceled" | "past_due" | "trialing" | "incomplete"
       lab_role: "owner" | "admin" | "member"
-      collection_visibility: "private" | "lab" | "public"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1002,7 +956,6 @@ export const Constants = {
       plan_type: ["free", "researcher", "lab"] as const,
       subscription_status: ["active", "canceled", "past_due", "trialing", "incomplete"] as const,
       lab_role: ["owner", "admin", "member"] as const,
-      collection_visibility: ["private", "lab", "public"] as const,
     },
   },
 } as const

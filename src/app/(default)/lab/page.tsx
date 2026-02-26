@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/supabase/server";
-import { getUserLab, loadLabCollections } from "@/lib/supabase/labs";
+import { getUserLab } from "@/lib/supabase/labs";
 import LabLanding from "./lab-landing";
 import LabDashboard from "./lab-dashboard";
 
@@ -49,14 +49,11 @@ export default async function LabPage() {
     .select("id, email, role, created_at, expires_at")
     .eq("lab_id", lab.lab_id);
 
-  const sharedCollections = await loadLabCollections(supabase, lab.lab_id);
-
   return (
     <LabDashboard
       lab={{ id: lab.lab_id, name: lab.lab_name, role: lab.role }}
       members={membersData ?? []}
       invitations={invitations ?? []}
-      sharedCollections={sharedCollections}
     />
   );
 }
