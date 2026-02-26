@@ -51,7 +51,7 @@ export default function LabLanding({ invitations, userEmail }: LabLandingProps) 
           <div className="flex gap-3">
             <FolderOpen className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium text-sm">Shared collections</p>
+              <p className="font-medium text-sm">Shared collections <span className="text-muted-foreground font-normal">(coming soon)</span></p>
               <p className="text-sm text-muted-foreground">
                 Pool reading lists across the group so everyone can browse, add
                 to, and build on the same sets of papers.
@@ -62,7 +62,7 @@ export default function LabLanding({ invitations, userEmail }: LabLandingProps) 
           <div className="flex gap-3">
             <StickyNote className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium text-sm">Lab notes on papers</p>
+              <p className="font-medium text-sm">Lab notes on papers <span className="text-muted-foreground font-normal">(coming soon)</span></p>
               <p className="text-sm text-muted-foreground">
                 Leave notes that stay attached to the paper — shared context
                 your whole lab can see and contribute to.

@@ -37,6 +37,9 @@ export async function POST(
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 
+  // Fire-and-forget usage tracking
+  supabase.rpc("increment_usage", { target_user_id: user.id, field: "papers_saved" });
+
   return NextResponse.json({ status: "saved", work_id: id });
 }
 

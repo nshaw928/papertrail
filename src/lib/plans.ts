@@ -7,7 +7,6 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: 1,
     aiSummariesOnDemand: false,
     exportEnabled: false,
-    citationGraphHops: 1,
   },
   researcher: {
     searchesPerDay: null, // unlimited
@@ -15,7 +14,6 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: null,
     aiSummariesOnDemand: true,
     exportEnabled: true,
-    citationGraphHops: 3,
   },
   lab: {
     searchesPerDay: null,
@@ -23,7 +21,6 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: null,
     aiSummariesOnDemand: true,
     exportEnabled: true,
-    citationGraphHops: 3,
   },
 };
 

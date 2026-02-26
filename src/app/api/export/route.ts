@@ -36,6 +36,75 @@ function workToCsvRow(paper: WorkWithRelations): string {
 
 const CSV_HEADER = "Title,Authors,Year,DOI,Source,Cited By,Topics,Abstract,Open Access URL";
 
+// ---- BibTeX helpers ----
+
+const OPENALEX_TYPE_TO_BIBTEX: Record<string, string> = {
+  "journal-article": "article",
+  "book-chapter": "incollection",
+  book: "book",
+  "proceedings-article": "inproceedings",
+  dissertation: "phdthesis",
+  report: "techreport",
+  dataset: "misc",
+  preprint: "unpublished",
+};
+
+function bibtexEscape(value: string): string {
+  return value.replace(/([&%$#_{}~^\\])/g, "\\$1");
+}
+
+function makeCiteKey(paper: WorkWithRelations, usedKeys: Set<string>): string {
+  const surname =
+    (paper.authors[0]?.display_name ?? "unknown").split(/\s+/).pop() ?? "unknown";
+  const year = paper.year ?? "nd";
+  let base = `${surname}${year}`.replace(/[^a-zA-Z0-9]/g, "");
+  let key = base;
+  let suffix = 97; // 'a'
+  while (usedKeys.has(key)) {
+    key = `${base}${String.fromCharCode(suffix++)}`;
+  }
+  usedKeys.add(key);
+  return key;
+}
+
+function formatBibtex(papers: WorkWithRelations[]): string {
+  const usedKeys = new Set<string>();
+
+  return papers
+    .map((paper) => {
+      const entryType =
+        OPENALEX_TYPE_TO_BIBTEX[paper.type ?? ""] ?? "misc";
+      const key = makeCiteKey(paper, usedKeys);
+
+      const fields: string[] = [];
+
+      fields.push(`  title = {${bibtexEscape(paper.title)}}`);
+
+      if (paper.authors.length) {
+        fields.push(
+          `  author = {${paper.authors.map((a) => bibtexEscape(a.display_name)).join(" and ")}}`
+        );
+      }
+
+      if (paper.year) fields.push(`  year = {${paper.year}}`);
+      if (paper.doi) fields.push(`  doi = {${bibtexEscape(paper.doi)}}`);
+      if (paper.source_display_name) {
+        const journalField =
+          entryType === "inproceedings" ? "booktitle" : "journal";
+        fields.push(
+          `  ${journalField} = {${bibtexEscape(paper.source_display_name)}}`
+        );
+      }
+      if (paper.open_access_url)
+        fields.push(`  url = {${paper.open_access_url}}`);
+      if (paper.abstract)
+        fields.push(`  abstract = {${bibtexEscape(paper.abstract)}}`);
+
+      return `@${entryType}{${key},\n${fields.join(",\n")}\n}`;
+    })
+    .join("\n\n");
+}
+
 export async function GET(request: NextRequest) {
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
@@ -51,9 +120,13 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
+  const format = searchParams.get("format") ?? "csv";
   const scope = searchParams.get("scope") ?? "library";
   const collectionId = searchParams.get("id");
 
+  if (format !== "csv" && format !== "bibtex") {
+    return NextResponse.json({ error: "Invalid format" }, { status: 400 });
+  }
   if (scope !== "library" && scope !== "collection") {
     return NextResponse.json({ error: "Invalid scope" }, { status: 400 });
   }
@@ -94,6 +167,16 @@ export async function GET(request: NextRequest) {
         userId: user.id,
       });
     }
+  }
+
+  if (format === "bibtex") {
+    const bib = formatBibtex(papers);
+    return new NextResponse(bib, {
+      headers: {
+        "Content-Type": "application/x-bibtex; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="papertrail-export.bib"',
+      },
+    });
   }
 
   const rows = [CSV_HEADER, ...papers.map(workToCsvRow)];

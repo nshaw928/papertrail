@@ -21,12 +21,14 @@ interface PricingCardsProps {
   isLoggedIn: boolean;
 }
 
+type BillingPeriod = "monthly" | "yearly";
+
 const tiers = [
   {
     plan: "free" as const,
     name: "Explorer",
-    price: "$0",
-    period: "forever",
+    monthly: { price: "$0", period: "forever" },
+    yearly: { price: "$0", period: "forever" },
     description: "Discover papers and build your first collection.",
     features: [
       { text: "50 searches/day", included: true },
@@ -42,9 +44,8 @@ const tiers = [
   {
     plan: "researcher" as const,
     name: "Researcher",
-    price: "$8",
-    period: "/month",
-    yearlyPrice: "$80/year",
+    monthly: { price: "$8", period: "/month" },
+    yearly: { price: "$80", period: "/year" },
     description: "For active researchers, grad students, and postdocs.",
     features: [
       { text: "Unlimited searches", included: true },
@@ -61,18 +62,17 @@ const tiers = [
   {
     plan: "lab" as const,
     name: "Lab",
-    price: "$8",
-    period: "/member/month",
-    yearlyPrice: "$80/member/year",
+    monthly: { price: "$8", period: "/member/month" },
+    yearly: { price: "$80", period: "/member/year" },
     description: "For research groups. All Researcher features plus collaboration.",
     features: [
       { text: "Everything in Researcher", included: true },
-      { text: "Shared collections", included: true },
-      { text: "Pinned lab collections", included: true },
-      { text: "Lab library feed", included: true },
+      { text: "Shared collections (coming soon)", included: true },
+      { text: "Pinned lab collections (coming soon)", included: true },
+      { text: "Lab library feed (coming soon)", included: true },
       { text: "Member management", included: true },
-      { text: "Admin dashboard", included: true },
-      { text: "Lab notes on papers", included: true },
+      { text: "Admin dashboard (coming soon)", included: true },
+      { text: "Lab notes on papers (coming soon)", included: true },
     ],
   },
 ];
@@ -82,6 +82,7 @@ export default function PricingCards({
   isLoggedIn,
 }: PricingCardsProps) {
   const router = useRouter();
+  const [billing, setBilling] = useState<BillingPeriod>("monthly");
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +99,7 @@ export default function PricingCards({
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, billing: "monthly" }),
+        body: JSON.stringify({ plan, billing }),
       });
       const data = await res.json();
       if (data.url) {
@@ -114,9 +115,42 @@ export default function PricingCards({
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-      {error && <p className="col-span-full text-sm text-destructive text-center">{error}</p>}
-      {tiers.map((tier) => (
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Billing toggle */}
+      <div className="flex justify-center">
+        <div className="inline-flex items-center rounded-full border p-1 text-sm">
+          <button
+            className={cn(
+              "rounded-full px-4 py-1.5 font-medium transition-colors",
+              billing === "monthly"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => setBilling("monthly")}
+          >
+            Monthly
+          </button>
+          <button
+            className={cn(
+              "rounded-full px-4 py-1.5 font-medium transition-colors",
+              billing === "yearly"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => setBilling("yearly")}
+          >
+            Yearly
+            <span className="ml-1.5 text-xs opacity-75">save ~17%</span>
+          </button>
+        </div>
+      </div>
+
+      {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
+      <div className="grid gap-6 md:grid-cols-3">
+      {tiers.map((tier) => {
+        const { price, period } = tier[billing];
+        return (
         <Card
           key={tier.plan}
           className={cn(tier.popular && "border-primary relative")}
@@ -130,13 +164,8 @@ export default function PricingCards({
             <CardTitle className="text-xl">{tier.name}</CardTitle>
             <CardDescription>{tier.description}</CardDescription>
             <div className="pt-2">
-              <span className="text-3xl font-bold">{tier.price}</span>
-              <span className="text-muted-foreground">{tier.period}</span>
-              {tier.yearlyPrice && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  or {tier.yearlyPrice} (save ~17%)
-                </p>
-              )}
+              <span className="text-3xl font-bold">{price}</span>
+              <span className="text-muted-foreground">{period}</span>
             </div>
           </CardHeader>
           <CardContent>
@@ -177,7 +206,9 @@ export default function PricingCards({
             )}
           </CardFooter>
         </Card>
-      ))}
+        );
+      })}
+      </div>
     </div>
   );
 }

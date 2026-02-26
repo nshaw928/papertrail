@@ -106,7 +106,6 @@ export interface PlanLimits {
   collections: number | null;
   aiSummariesOnDemand: boolean;
   exportEnabled: boolean;
-  citationGraphHops: number;
 }
 
 // ---- Labs ----
