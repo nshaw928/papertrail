@@ -33,94 +33,100 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  try {
+    const admin = createAdminClient();
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.supabase_user_id;
-      const rawPlan = session.metadata?.plan ?? "researcher";
-      const labId = session.metadata?.lab_id || null;
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.supabase_user_id;
+        const rawPlan = session.metadata?.plan ?? "researcher";
+        const labId = session.metadata?.lab_id || null;
 
-      // Validate plan from metadata to prevent injection
-      if (!VALID_PLANS.includes(rawPlan as PlanType)) {
-        console.error("Invalid plan in checkout metadata:", rawPlan);
-        return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-      }
-      const plan = rawPlan as PlanType;
+        // Validate plan from metadata to prevent injection
+        if (!VALID_PLANS.includes(rawPlan as PlanType)) {
+          console.error("Invalid plan in checkout metadata:", rawPlan);
+          return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+        }
+        const plan = rawPlan as PlanType;
 
-      if (!userId || !session.subscription) break;
+        if (!userId || !session.subscription) break;
 
-      const subResponse = await stripe.subscriptions.retrieve(
-        session.subscription as string
-      );
-      // Extract subscription data (Stripe SDK v20 returns Response<Subscription>)
-      const sub = subResponse as unknown as {
-        id: string;
-        current_period_start: number;
-        current_period_end: number;
-        cancel_at_period_end: boolean;
-        status: string;
-      };
+        const sub = await stripe.subscriptions.retrieve(
+          session.subscription as string
+        );
+        // In Stripe SDK v20, current_period_start/end moved to SubscriptionItem
+        const item = sub.items.data[0];
 
-      await admin.from("subscriptions").upsert(
-        {
-          user_id: userId,
-          lab_id: labId,
-          stripe_customer_id: session.customer as string,
-          stripe_subscription_id: sub.id,
-          plan,
-          status: "active",
-          current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
-          cancel_at_period_end: sub.cancel_at_period_end,
-        },
-        { onConflict: "user_id" }
-      );
-      break;
-    }
-
-    case "customer.subscription.updated": {
-      const sub = event.data.object as unknown as {
-        id: string;
-        current_period_start: number;
-        current_period_end: number;
-        cancel_at_period_end: boolean;
-        status: string;
-      };
-
-      const { data: existing } = await admin
-        .from("subscriptions")
-        .select("id")
-        .eq("stripe_subscription_id", sub.id)
-        .single();
-
-      if (existing) {
-        const status = (VALID_STATUSES as readonly string[]).includes(sub.status)
-          ? sub.status
-          : "active";
-
-        await admin
-          .from("subscriptions")
-          .update({
-            status: status as "active",
-            current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+        const { error: upsertError } = await admin.from("subscriptions").upsert(
+          {
+            user_id: userId,
+            lab_id: labId,
+            stripe_customer_id: session.customer as string,
+            stripe_subscription_id: sub.id,
+            plan,
+            status: "active",
+            current_period_start: new Date(item.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(item.current_period_end * 1000).toISOString(),
             cancel_at_period_end: sub.cancel_at_period_end,
-          })
-          .eq("stripe_subscription_id", sub.id);
+          },
+          { onConflict: "user_id" }
+        );
+        if (upsertError) {
+          console.error("Supabase upsert failed:", upsertError);
+          return NextResponse.json({ error: "Database error" }, { status: 500 });
+        }
+        break;
       }
-      break;
-    }
 
-    case "customer.subscription.deleted": {
-      const sub = event.data.object as unknown as { id: string };
-      await admin
-        .from("subscriptions")
-        .update({ status: "canceled", cancel_at_period_end: false })
-        .eq("stripe_subscription_id", sub.id);
-      break;
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription;
+        const item = sub.items.data[0];
+
+        const { data: existing } = await admin
+          .from("subscriptions")
+          .select("id")
+          .eq("stripe_subscription_id", sub.id)
+          .single();
+
+        if (existing) {
+          const status = (VALID_STATUSES as readonly string[]).includes(sub.status)
+            ? sub.status
+            : "active";
+
+          const { error: updateError } = await admin
+            .from("subscriptions")
+            .update({
+              status: status as "active",
+              current_period_start: new Date(item.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(item.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: sub.cancel_at_period_end,
+            })
+            .eq("stripe_subscription_id", sub.id);
+          if (updateError) {
+            console.error("Supabase update failed:", updateError);
+            return NextResponse.json({ error: "Database error" }, { status: 500 });
+          }
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription;
+        const { error: deleteError } = await admin
+          .from("subscriptions")
+          .update({ status: "canceled", cancel_at_period_end: false })
+          .eq("stripe_subscription_id", sub.id);
+        if (deleteError) {
+          console.error("Supabase update (cancel) failed:", deleteError);
+          return NextResponse.json({ error: "Database error" }, { status: 500 });
+        }
+        break;
+      }
     }
+  } catch (err) {
+    console.error("Webhook handler error:", err);
+    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
