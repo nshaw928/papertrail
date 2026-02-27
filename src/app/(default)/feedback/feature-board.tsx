@@ -48,7 +48,7 @@ export default function FeatureBoard({
   const [feedbackEmail, setFeedbackEmail] = useState("");
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const isPaid = userPlan === "researcher" || userPlan === "lab";
+  const isPaid = userPlan === "alpha" || userPlan === "researcher" || userPlan === "lab";
 
   const sorted = [...features].sort((a, b) => {
     if (sort === "votes") return b.upvote_count - a.upvote_count;
