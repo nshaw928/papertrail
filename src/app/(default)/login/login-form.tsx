@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function LoginForm() {
   const searchParams = useSearchParams();
   const confirmError = searchParams.get("error") === "confirmation_failed";
+  const inviteParam = searchParams.get("invite") ?? "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [inviteCode, setInviteCode] = useState(inviteParam);
+  const [isSignUp, setIsSignUp] = useState(!!inviteParam);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     confirmError ? "Email confirmation failed. Please try again." : null
@@ -29,10 +31,34 @@ export default function LoginForm() {
     const supabase = createClient();
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      // Validate invite code first
+      if (!inviteCode.trim()) {
+        setError("An invite code is required to sign up.");
+        setLoading(false);
+        return;
+      }
+
+      const validateRes = await fetch(`/api/invites/${encodeURIComponent(inviteCode.trim())}`);
+      const validateData = await validateRes.json();
+
+      if (!validateData.valid) {
+        setError("Invalid or expired invite code.");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
       } else {
+        // Redeem the invite code
+        if (data.user) {
+          await fetch(`/api/invites/${encodeURIComponent(inviteCode.trim())}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: data.user.id }),
+          });
+        }
         setMessage("Check your email to confirm your account.");
       }
     } else {
@@ -75,6 +101,16 @@ export default function LoginForm() {
               minLength={6}
             />
 
+            {isSignUp && (
+              <Input
+                type="text"
+                placeholder="Invite code"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                required
+              />
+            )}
+
             {error && <p className="text-sm text-destructive">{error}</p>}
             {message && (
               <p className="text-sm text-green-600">{message}</p>
@@ -99,7 +135,7 @@ export default function LoginForm() {
             >
               {isSignUp
                 ? "Already have an account? Sign in"
-                : "Need an account? Sign up"}
+                : "Have an invite? Sign up"}
             </button>
           </form>
         </CardContent>

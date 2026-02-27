@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { getUserPlan, getDailyUsage } from "@/lib/supabase/plans";
 import { getUserLab } from "@/lib/supabase/labs";
 import { PLAN_LIMITS, PLAN_DISPLAY, isPaid } from "@/lib/plans";
+import { isAdmin } from "@/lib/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import ManageSubscriptionButton from "./manage-subscription-button";
 import PasswordResetButton from "@/components/password-reset-button";
+import InviteManager from "./invite-manager";
 
 export default async function SettingsPage() {
   const { supabase, user } = await requireUser();
@@ -85,6 +87,8 @@ export default async function SettingsPage() {
           <PasswordResetButton email={user.email!} />
         </CardContent>
       </Card>
+
+      {isAdmin(user.id) && <InviteManager />}
 
       <Card>
         <CardHeader>

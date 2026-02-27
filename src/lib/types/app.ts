@@ -171,3 +171,59 @@ export interface DailyUsage {
   ai_summary_requests: number;
   papers_saved: number;
 }
+
+// ---- Features & Feedback ----
+
+export type FeatureStatus = "planned" | "in_progress" | "shipped" | "considering";
+export type FeedbackCategory = "general" | "bug" | "feature_request" | "other";
+
+export interface Feature {
+  id: string;
+  title: string;
+  description: string | null;
+  status: FeatureStatus;
+  priority: number;
+  upvote_count: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  user_has_upvoted?: boolean;
+}
+
+export interface FeatureComment {
+  id: string;
+  feature_id: string;
+  user_id: string;
+  user_email: string;
+  content: string;
+  created_at: string;
+}
+
+export interface Feedback {
+  id: string;
+  user_id: string | null;
+  email: string | null;
+  category: FeedbackCategory;
+  content: string;
+  created_at: string;
+}
+
+// ---- Waitlist & Invites ----
+
+export interface WaitlistEntry {
+  id: string;
+  email: string;
+  source: string | null;
+  created_at: string;
+}
+
+export interface InviteLink {
+  id: string;
+  code: string;
+  email: string | null;
+  created_by: string;
+  used_by: string | null;
+  used_at: string | null;
+  expires_at: string;
+  created_at: string;
+}

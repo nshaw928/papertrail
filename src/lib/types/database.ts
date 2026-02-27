@@ -929,6 +929,184 @@ export type Database = {
         },
       ]
     }
+    features: {
+      Row: {
+        id: string
+        title: string
+        description: string | null
+        status: Database["public"]["Enums"]["feature_status"]
+        priority: number
+        upvote_count: number
+        created_by: string | null
+        created_at: string | null
+        updated_at: string | null
+      }
+      Insert: {
+        id?: string
+        title: string
+        description?: string | null
+        status?: Database["public"]["Enums"]["feature_status"]
+        priority?: number
+        upvote_count?: number
+        created_by?: string | null
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Update: {
+        id?: string
+        title?: string
+        description?: string | null
+        status?: Database["public"]["Enums"]["feature_status"]
+        priority?: number
+        upvote_count?: number
+        created_by?: string | null
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Relationships: []
+    }
+    feature_upvotes: {
+      Row: {
+        feature_id: string
+        user_id: string
+        created_at: string | null
+      }
+      Insert: {
+        feature_id: string
+        user_id: string
+        created_at?: string | null
+      }
+      Update: {
+        feature_id?: string
+        user_id?: string
+        created_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "feature_upvotes_feature_id_fkey"
+          columns: ["feature_id"]
+          isOneToOne: false
+          referencedRelation: "features"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    feature_comments: {
+      Row: {
+        id: string
+        feature_id: string
+        user_id: string
+        user_email: string
+        content: string
+        created_at: string | null
+      }
+      Insert: {
+        id?: string
+        feature_id: string
+        user_id: string
+        user_email: string
+        content: string
+        created_at?: string | null
+      }
+      Update: {
+        id?: string
+        feature_id?: string
+        user_id?: string
+        user_email?: string
+        content?: string
+        created_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "feature_comments_feature_id_fkey"
+          columns: ["feature_id"]
+          isOneToOne: false
+          referencedRelation: "features"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    feedback: {
+      Row: {
+        id: string
+        user_id: string | null
+        email: string | null
+        category: Database["public"]["Enums"]["feedback_category"]
+        content: string
+        created_at: string | null
+      }
+      Insert: {
+        id?: string
+        user_id?: string | null
+        email?: string | null
+        category?: Database["public"]["Enums"]["feedback_category"]
+        content: string
+        created_at?: string | null
+      }
+      Update: {
+        id?: string
+        user_id?: string | null
+        email?: string | null
+        category?: Database["public"]["Enums"]["feedback_category"]
+        content?: string
+        created_at?: string | null
+      }
+      Relationships: []
+    }
+    waitlist: {
+      Row: {
+        id: string
+        email: string
+        source: string | null
+        created_at: string | null
+      }
+      Insert: {
+        id?: string
+        email: string
+        source?: string | null
+        created_at?: string | null
+      }
+      Update: {
+        id?: string
+        email?: string
+        source?: string | null
+        created_at?: string | null
+      }
+      Relationships: []
+    }
+    invite_links: {
+      Row: {
+        id: string
+        code: string
+        email: string | null
+        created_by: string
+        used_by: string | null
+        used_at: string | null
+        expires_at: string
+        created_at: string | null
+      }
+      Insert: {
+        id?: string
+        code?: string
+        email?: string | null
+        created_by: string
+        used_by?: string | null
+        used_at?: string | null
+        expires_at?: string
+        created_at?: string | null
+      }
+      Update: {
+        id?: string
+        code?: string
+        email?: string | null
+        created_by?: string
+        used_by?: string | null
+        used_at?: string | null
+        expires_at?: string
+        created_at?: string | null
+      }
+      Relationships: []
+    }
     }
     Views: {
       [_ in never]: never
@@ -953,6 +1131,8 @@ export type Database = {
       plan_type: "free" | "researcher" | "lab"
       subscription_status: "active" | "canceled" | "past_due" | "trialing" | "incomplete"
       lab_role: "owner" | "admin" | "member"
+      feature_status: "planned" | "in_progress" | "shipped" | "considering"
+      feedback_category: "general" | "bug" | "feature_request" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1083,6 +1263,8 @@ export const Constants = {
       plan_type: ["free", "researcher", "lab"] as const,
       subscription_status: ["active", "canceled", "past_due", "trialing", "incomplete"] as const,
       lab_role: ["owner", "admin", "member"] as const,
+      feature_status: ["planned", "in_progress", "shipped", "considering"] as const,
+      feedback_category: ["general", "bug", "feature_request", "other"] as const,
     },
   },
 } as const

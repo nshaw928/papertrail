@@ -17,6 +17,8 @@ import {
   Waypoints,
   CreditCard,
   FlaskConical,
+  Info,
+  MessageSquare,
 } from "lucide-react";
 import {
   Sidebar,
@@ -47,6 +49,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { signOut } from "@/app/(auth)/actions";
 
 interface AppSidebarProps {
@@ -84,6 +87,7 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                   <BookOpen className="size-4" />
                 </div>
                 <span className="font-semibold tracking-tight">Papertrail</span>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">alpha</Badge>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -220,6 +224,40 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Papertrail</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/about"}>
+                  <Link href="/about">
+                    <Info />
+                    <span>About</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/feedback"}>
+                  <Link href="/feedback">
+                    <MessageSquare />
+                    <span>Feedback</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/pricing"}>
+                  <Link href="/pricing">
+                    <CreditCard />
+                    <span>Plans & Pricing</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
@@ -249,12 +287,6 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/pricing">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Plans & Pricing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

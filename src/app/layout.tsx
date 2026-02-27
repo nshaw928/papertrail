@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Papertrail",
+  title: "Papertrail (Alpha)",
   description: "Explore academic research with citation graphs and topic hierarchies",
 };
 
