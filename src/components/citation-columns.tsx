@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import SaveButton from "@/components/save-button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WorkWithRelations } from "@/lib/types/app";
 
 function CitationCard({ paper }: { paper: WorkWithRelations }) {
@@ -52,54 +52,51 @@ interface CitationColumnsProps {
 
 export default function CitationColumns({
   references,
-  citedBy: initialCitedBy,
+  citedBy,
   citedByTotal,
 }: CitationColumnsProps) {
-  const [citedBy] = useState(initialCitedBy);
-  const [citedByPage] = useState(1);
   const perPage = 20;
   const totalPages = Math.ceil(citedByTotal / perPage);
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      {/* References */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold">
+    <Tabs defaultValue="references">
+      <TabsList>
+        <TabsTrigger value="references">
           References ({references.length})
-        </h3>
+        </TabsTrigger>
+        <TabsTrigger value="cited-by">
+          Cited By ({citedByTotal})
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="references" className="space-y-2 mt-4">
         {references.length > 0 ? (
-          <div className="space-y-2">
-            {references.map((paper) => (
-              <CitationCard key={paper.id} paper={paper} />
-            ))}
-          </div>
+          references.map((paper) => (
+            <CitationCard key={paper.id} paper={paper} />
+          ))
         ) : (
           <p className="text-sm text-muted-foreground">No references found</p>
         )}
-      </div>
+      </TabsContent>
 
-      {/* Cited By */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold">
-          Cited By ({citedByTotal})
-        </h3>
+      <TabsContent value="cited-by" className="space-y-2 mt-4">
         {citedBy.length > 0 ? (
-          <div className="space-y-2">
+          <>
             {citedBy.map((paper) => (
               <CitationCard key={paper.id} paper={paper} />
             ))}
             {totalPages > 1 && (
               <p className="text-xs text-muted-foreground pt-2">
-                Showing page {citedByPage} of {totalPages}
+                Showing page 1 of {totalPages}
               </p>
             )}
-          </div>
+          </>
         ) : (
           <p className="text-sm text-muted-foreground">
             No citing papers found
           </p>
         )}
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

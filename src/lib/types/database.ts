@@ -802,6 +802,50 @@ export type Database = {
       }
       Relationships: []
     }
+    paper_notes: {
+      Row: {
+        id: string
+        user_id: string
+        work_id: string
+        content: string
+        anchor_page: number | null
+        anchor_y: number | null
+        anchor_quote: string | null
+        created_at: string | null
+        updated_at: string | null
+      }
+      Insert: {
+        id?: string
+        user_id: string
+        work_id: string
+        content: string
+        anchor_page?: number | null
+        anchor_y?: number | null
+        anchor_quote?: string | null
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Update: {
+        id?: string
+        user_id?: string
+        work_id?: string
+        content?: string
+        anchor_page?: number | null
+        anchor_y?: number | null
+        anchor_quote?: string | null
+        created_at?: string | null
+        updated_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "paper_notes_work_id_fkey"
+          columns: ["work_id"]
+          isOneToOne: false
+          referencedRelation: "works"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
     }
     Views: {
       [_ in never]: never

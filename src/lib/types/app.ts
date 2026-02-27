@@ -46,6 +46,7 @@ export interface WorkWithRelations {
     is_primary: boolean | null;
   }[];
   is_saved?: boolean;
+  note_count?: number;
 }
 
 export interface SearchResult {
@@ -87,6 +88,19 @@ export interface TopicWithChildren {
   parent_topic_id: string | null;
   children: TopicWithChildren[];
   paper_count?: number;
+}
+
+// ---- Paper Notes ----
+
+export interface PaperNote {
+  id: string;
+  work_id: string;
+  content: string;
+  anchor_page: number | null;
+  anchor_y: number | null;
+  anchor_quote: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 // ---- Plans & Subscriptions ----

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { isSafeUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import SaveButton from "./save-button";
 import AddToCollection from "./add-to-collection";
+import NoteIndicator from "./note-indicator";
 import type { WorkWithRelations } from "@/lib/types/app";
 
 interface PaperCardProps {
@@ -55,25 +57,31 @@ export default function PaperCard({ paper }: PaperCardProps) {
           </p>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap gap-1">
-            {paper.topics.slice(0, 3).map((t) => (
-              <Link key={t.id} href={`/topics/${t.id}`}>
-                <Badge variant="secondary" className="text-xs">
-                  {t.name}
-                </Badge>
-              </Link>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{(paper.cited_by_count ?? 0).toLocaleString()} cited</span>
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{(paper.cited_by_count ?? 0).toLocaleString()} cited</span>
+          {!!paper.note_count && paper.note_count > 0 && (
+            <NoteIndicator count={paper.note_count} />
+          )}
+          <div className="ml-auto flex items-center gap-1.5">
             {paper.is_open_access && (
-              <Badge
-                variant="outline"
-                className="text-xs border-green-600 text-green-600"
-              >
-                OA
-              </Badge>
+              paper.open_access_url && isSafeUrl(paper.open_access_url) ? (
+                <a href={paper.open_access_url} target="_blank" rel="noopener noreferrer">
+                  <Badge variant="outline" className="text-xs border-green-600 text-green-600">
+                    OA
+                  </Badge>
+                </a>
+              ) : (
+                <Badge variant="outline" className="text-xs border-green-600 text-green-600">
+                  OA
+                </Badge>
+              )
+            )}
+            {paper.doi && isSafeUrl(paper.doi) && (
+              <a href={paper.doi} target="_blank" rel="noopener noreferrer">
+                <Badge variant="outline" className="text-xs">
+                  DOI
+                </Badge>
+              </a>
             )}
           </div>
         </div>

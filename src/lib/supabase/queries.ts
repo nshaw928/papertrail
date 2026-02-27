@@ -56,15 +56,26 @@ export async function loadWorksWithRelations(
     }
   }
 
-  // Check saved status if userId provided
+  // Check saved status and note counts if userId provided
   let savedIds = new Set<string>();
+  const noteCountMap = new Map<string, number>();
   if (opts?.userId) {
-    const { data: savedWorks } = await supabase
-      .from("saved_works")
-      .select("work_id")
-      .eq("user_id", opts.userId)
-      .in("work_id", workIds);
+    const [{ data: savedWorks }, { data: noteRows }] = await Promise.all([
+      supabase
+        .from("saved_works")
+        .select("work_id")
+        .eq("user_id", opts.userId)
+        .in("work_id", workIds),
+      supabase
+        .from("paper_notes")
+        .select("work_id")
+        .eq("user_id", opts.userId)
+        .in("work_id", workIds),
+    ]);
     savedIds = new Set(savedWorks?.map((s) => s.work_id) ?? []);
+    for (const row of noteRows ?? []) {
+      noteCountMap.set(row.work_id, (noteCountMap.get(row.work_id) ?? 0) + 1);
+    }
   }
 
   // Group author/topic links by work_id
@@ -118,7 +129,12 @@ export async function loadWorksWithRelations(
       ...work,
       authors,
       topics,
-      ...(opts?.userId !== undefined ? { is_saved: savedIds.has(wid) } : {}),
+      ...(opts?.userId !== undefined
+        ? {
+            is_saved: savedIds.has(wid),
+            note_count: noteCountMap.get(wid) ?? 0,
+          }
+        : {}),
     } as WorkWithRelations;
   });
 }

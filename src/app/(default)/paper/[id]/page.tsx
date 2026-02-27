@@ -14,6 +14,7 @@ import { loadWorksWithRelations } from "@/lib/supabase/queries";
 import { enrichCitations } from "@/lib/openalex/enrich-citations";
 import { hydrateStubs } from "@/lib/openalex/hydrate";
 import { isSafeUrl, levelName } from "@/lib/utils";
+import PaperQuotes from "@/components/paper-quotes";
 import type { WorkWithRelations } from "@/lib/types/app";
 
 function TopicBadges({ topics }: { topics: { id: string; name: string; score: number | null }[] }) {
@@ -177,59 +178,30 @@ export default async function PaperPage({ params }: PageProps) {
         <span className="text-muted-foreground">
           {(paper.cited_by_count ?? 0).toLocaleString()} citations
         </span>
+        {paper.doi && isSafeUrl(paper.doi) && (
+          <a href={paper.doi} target="_blank" rel="noopener noreferrer"
+            className="text-sm text-primary underline">DOI</a>
+        )}
         {paper.is_open_access && (
-          <Badge
-            variant="outline"
-            className="border-green-600 text-green-600"
-          >
-            Open Access
-          </Badge>
+          paper.open_access_url && isSafeUrl(paper.open_access_url) ? (
+            <a href={paper.open_access_url} target="_blank" rel="noopener noreferrer">
+              <Badge variant="outline" className="border-green-600 text-green-600">
+                Open Access
+              </Badge>
+            </a>
+          ) : (
+            <Badge variant="outline" className="border-green-600 text-green-600">
+              Open Access
+            </Badge>
+          )
         )}
         {paper.is_retracted && (
           <Badge variant="destructive">Retracted</Badge>
         )}
       </div>
 
-      {/* Links */}
-      {(paper.doi || paper.open_access_url) && (
-        <div className="flex gap-3">
-          {paper.doi && isSafeUrl(paper.doi) && (
-            <a
-              href={paper.doi}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary underline"
-            >
-              DOI
-            </a>
-          )}
-          {paper.open_access_url && isSafeUrl(paper.open_access_url) && (
-            <a
-              href={paper.open_access_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary underline"
-            >
-              Read Paper
-            </a>
-          )}
-        </div>
-      )}
-
       {/* Topics */}
       <TopicBadges topics={topics} />
-
-      <Separator />
-
-      {/* Abstract */}
-      {paper.abstract && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Abstract</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {paper.abstract}
-          </p>
-        </section>
-      )}
 
       {/* AI Summary */}
       <AISummarySection
@@ -276,6 +248,21 @@ export default async function PaperPage({ params }: PageProps) {
             )}
           </div>
         </details>
+      )}
+
+      <Separator />
+
+      {/* Quotes & Notes */}
+      {user && <PaperQuotes workId={id} />}
+
+      {/* Abstract */}
+      {paper.abstract && (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">Abstract</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {paper.abstract}
+          </p>
+        </section>
       )}
 
       {/* Citations */}
