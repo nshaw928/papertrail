@@ -10,7 +10,7 @@ export async function PATCH(
   const { id } = await params;
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
   if (!UUID_RE.test(id)) {
     return NextResponse.json({ error: "Invalid note ID" }, { status: 400 });
@@ -55,6 +55,7 @@ export async function PATCH(
     .from("paper_notes")
     .update(updates)
     .eq("id", id)
+    .eq("user_id", user.id)
     .select("id, work_id, content, anchor_page, anchor_y, anchor_quote, created_at, updated_at")
     .single();
 
@@ -76,7 +77,7 @@ export async function DELETE(
   const { id } = await params;
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
   if (!UUID_RE.test(id)) {
     return NextResponse.json({ error: "Invalid note ID" }, { status: 400 });
@@ -85,7 +86,8 @@ export async function DELETE(
   const { error } = await supabase
     .from("paper_notes")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", user.id);
 
   if (error) {
     console.error("Failed to delete note:", error.message);

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { requireApiUser } from "@/lib/supabase/server";
+import { createClient, requireApiUser } from "@/lib/supabase/server";
 
 export async function GET(
   _request: NextRequest,
@@ -11,7 +10,7 @@ export async function GET(
 
   const { data: comments, error } = await supabase
     .from("feature_comments")
-    .select("*")
+    .select("id, feature_id, user_id, user_email, content, created_at")
     .eq("feature_id", featureId)
     .order("created_at", { ascending: true });
 
@@ -42,12 +41,16 @@ export async function POST(
     return NextResponse.json({ error: "Comment too long (max 2000 chars)" }, { status: 400 });
   }
 
+  if (!user.email) {
+    return NextResponse.json({ error: "Account has no email" }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("feature_comments")
     .insert({
       feature_id: featureId,
       user_id: user.id,
-      user_email: user.email!,
+      user_email: user.email,
       content,
     })
     .select()

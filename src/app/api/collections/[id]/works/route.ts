@@ -8,7 +8,19 @@ export async function POST(
   const { id } = await params;
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
+
+  // Verify collection ownership
+  const { data: collection } = await supabase
+    .from("collections")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!collection) {
+    return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+  }
 
   const body = await request.json().catch(() => ({}));
   const workId = (body as { work_id?: string }).work_id;
@@ -38,7 +50,19 @@ export async function DELETE(
   const { id } = await params;
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
+
+  // Verify collection ownership
+  const { data: collection } = await supabase
+    .from("collections")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!collection) {
+    return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+  }
 
   const body = await request.json().catch(() => ({}));
   const workId = (body as { work_id?: string }).work_id;
@@ -46,11 +70,16 @@ export async function DELETE(
     return NextResponse.json({ error: "work_id is required" }, { status: 400 });
   }
 
-  await supabase
+  const { error } = await supabase
     .from("collection_works")
     .delete()
     .eq("collection_id", id)
     .eq("work_id", workId);
+
+  if (error) {
+    console.error("Failed to remove work from collection:", error.message);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+  }
 
   return NextResponse.json({ status: "removed" });
 }

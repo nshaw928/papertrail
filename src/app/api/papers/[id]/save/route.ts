@@ -38,7 +38,8 @@ export async function POST(
   }
 
   // Fire-and-forget usage tracking
-  supabase.rpc("increment_usage", { target_user_id: user.id, field: "papers_saved" });
+  supabase.rpc("increment_usage", { target_user_id: user.id, field: "papers_saved" })
+    .then(({ error }) => { if (error) console.error("Usage tracking failed:", error.message); });
 
   return NextResponse.json({ status: "saved", work_id: id });
 }
@@ -52,11 +53,16 @@ export async function DELETE(
   if ("error" in auth) return auth.error;
   const { supabase, user } = auth;
 
-  await supabase
+  const { error } = await supabase
     .from("saved_works")
     .delete()
     .eq("user_id", user.id)
     .eq("work_id", id);
+
+  if (error) {
+    console.error("Failed to unsave paper:", error.message);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+  }
 
   return NextResponse.json({ status: "removed", work_id: id });
 }

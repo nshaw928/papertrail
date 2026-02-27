@@ -57,6 +57,9 @@ export async function POST(request: NextRequest) {
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
+  if (name.length > 200) {
+    return NextResponse.json({ error: "Name too long (max 200 chars)" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("collections")

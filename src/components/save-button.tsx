@@ -17,15 +17,21 @@ export default function SaveButton({
   const [saved, setSaved] = useState(initialSaved);
   const [loading, setLoading] = useState(false);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setLoading(true);
     setLimitMessage(null);
+    setErrorMessage(null);
     try {
       if (saved) {
-        await fetch(`/api/papers/${workId}/save`, { method: "DELETE" });
+        const res = await fetch(`/api/papers/${workId}/save`, { method: "DELETE" });
+        if (!res.ok) {
+          setErrorMessage("Failed to remove");
+          return;
+        }
         setSaved(false);
       } else {
         const res = await fetch(`/api/papers/${workId}/save`, {
@@ -38,10 +44,14 @@ export default function SaveButton({
           setLimitMessage(data.error ?? "Save limit reached");
           return;
         }
+        if (!res.ok) {
+          setErrorMessage("Failed to save");
+          return;
+        }
         setSaved(true);
       }
-    } catch (err) {
-      console.error("Failed to toggle save:", err);
+    } catch {
+      setErrorMessage("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -58,9 +68,9 @@ export default function SaveButton({
       >
         {saved ? "★ Saved" : "☆ Save"}
       </Button>
-      {limitMessage && (
+      {(limitMessage || errorMessage) && (
         <span className="text-xs text-destructive max-w-48 text-right">
-          {limitMessage}
+          {limitMessage || errorMessage}
         </span>
       )}
     </div>

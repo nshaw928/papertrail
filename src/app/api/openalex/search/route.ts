@@ -20,6 +20,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing query" }, { status: 400 });
   }
 
+  // Validate numeric parameters
+  if (isNaN(page) || page < 1 || page > 100) {
+    return NextResponse.json({ error: "page must be between 1 and 100" }, { status: 400 });
+  }
+  if (isNaN(perPage) || perPage < 1 || perPage > 50) {
+    return NextResponse.json({ error: "per_page must be between 1 and 50" }, { status: 400 });
+  }
+  if (fromYear && (isNaN(parseInt(fromYear, 10)) || parseInt(fromYear, 10) < 1900 || parseInt(fromYear, 10) > 2100)) {
+    return NextResponse.json({ error: "from_year must be between 1900 and 2100" }, { status: 400 });
+  }
+  if (toYear && (isNaN(parseInt(toYear, 10)) || parseInt(toYear, 10) < 1900 || parseInt(toYear, 10) > 2100)) {
+    return NextResponse.json({ error: "to_year must be between 1900 and 2100" }, { status: 400 });
+  }
+
+  // Whitelist valid sort values
+  const validSorts = ["relevance_score", "cited_by_count", "publication_date", "cited_by_count:desc", "cited_by_count:asc", "publication_date:desc", "publication_date:asc"];
+  if (sort && !validSorts.includes(sort)) {
+    return NextResponse.json({ error: "Invalid sort value" }, { status: 400 });
+  }
+
   // Require auth — unauthenticated users can't search (costs money)
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;

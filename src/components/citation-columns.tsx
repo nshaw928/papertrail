@@ -55,9 +55,6 @@ export default function CitationColumns({
   citedBy,
   citedByTotal,
 }: CitationColumnsProps) {
-  const perPage = 20;
-  const totalPages = Math.ceil(citedByTotal / perPage);
-
   return (
     <Tabs defaultValue="references">
       <TabsList>
@@ -85,9 +82,9 @@ export default function CitationColumns({
             {citedBy.map((paper) => (
               <CitationCard key={paper.id} paper={paper} />
             ))}
-            {totalPages > 1 && (
+            {citedByTotal > citedBy.length && (
               <p className="text-xs text-muted-foreground pt-2">
-                Showing page 1 of {totalPages}
+                Showing {citedBy.length} of {citedByTotal.toLocaleString()} citing papers
               </p>
             )}
           </>

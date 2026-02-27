@@ -8,18 +8,22 @@ export async function PATCH(
   const { id } = await params;
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
   const body = await request.json().catch(() => ({}));
   const name = (body as { name?: string }).name?.trim();
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
+  if (name.length > 200) {
+    return NextResponse.json({ error: "Name too long (max 200 chars)" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("collections")
     .update({ name })
     .eq("id", id)
+    .eq("user_id", user.id)
     .select("id, name, created_at")
     .single();
 
@@ -38,9 +42,9 @@ export async function DELETE(
   const { id } = await params;
   const auth = await requireApiUser();
   if ("error" in auth) return auth.error;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
-  const { error } = await supabase.from("collections").delete().eq("id", id);
+  const { error } = await supabase.from("collections").delete().eq("id", id).eq("user_id", user.id);
 
   if (error) {
     console.error("Failed to delete collection:", error.message);
