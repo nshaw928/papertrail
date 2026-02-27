@@ -225,8 +225,9 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        <SidebarSeparator />
+      </SidebarContent>
 
+      <SidebarFooter>
         <SidebarGroup>
           <SidebarGroupLabel>Papertrail</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -247,20 +248,9 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/pricing"}>
-                  <Link href="/pricing">
-                    <CreditCard />
-                    <span>Plans & Pricing</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter>
         <SidebarSeparator />
         <SidebarMenu>
           <SidebarMenuItem>
@@ -287,6 +277,12 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/pricing">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Plans & Pricing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
