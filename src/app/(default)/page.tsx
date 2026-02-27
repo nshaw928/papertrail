@@ -1,6 +1,24 @@
+import { createClient } from "@/lib/supabase/server";
 import SearchForm from "@/components/search-form";
+import type { SavedSearch } from "@/lib/types/app";
 
-export default function SearchPage() {
+export default async function SearchPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let savedSearches: SavedSearch[] = [];
+  if (user) {
+    const { data } = await supabase
+      .from("saved_searches")
+      .select("id, query, from_year, to_year, sort, result_count, cache_id, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    savedSearches = (data ?? []) as SavedSearch[];
+  }
+
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -12,7 +30,7 @@ export default function SearchPage() {
           access.
         </p>
       </div>
-      <SearchForm />
+      <SearchForm savedSearches={savedSearches} />
     </div>
   );
 }

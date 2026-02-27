@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireApiUser } from "@/lib/supabase/server";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
 import { checkLimit } from "@/lib/supabase/plans";
+import { computeQueryHash, isCacheStale } from "@/lib/search-cache";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -33,20 +34,87 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const admin = createAdminClient();
+  const fromYearNum = fromYear ? parseInt(fromYear, 10) : undefined;
+  const toYearNum = toYear ? parseInt(toYear, 10) : undefined;
+
   try {
+    // Only cache page 1
+    if (page === 1) {
+      const hash = computeQueryHash(query, fromYearNum ?? null, toYearNum ?? null, sort);
+
+      const { data: cached } = await admin
+        .from("search_cache")
+        .select("*")
+        .eq("query_hash", hash)
+        .single();
+
+      if (cached && !isCacheStale(cached.refreshed_at)) {
+        // Cache hit — serve from local DB
+        const workIds = cached.work_ids;
+        const { data: works } = await admin
+          .from("works")
+          .select("*")
+          .in("id", workIds);
+
+        const hydrated = await loadWorksWithRelations(supabase, works ?? [], {
+          userId: user.id,
+        });
+
+        // Re-sort to match cached order
+        const orderMap = new Map(workIds.map((wid, i) => [wid, i]));
+        hydrated.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+
+        // Cache hits still count against daily limit
+        await admin.rpc("increment_usage", {
+          target_user_id: user.id,
+          field: "search_count",
+        });
+
+        return NextResponse.json({
+          results: hydrated,
+          count: cached.result_count,
+          page,
+          per_page: perPage,
+        });
+      }
+    }
+
+    // Cache miss or page > 1 — call OpenAlex
     const { results: openalexResults, meta } = await searchWorks(
       query,
       page,
       perPage,
       {
-        fromYear: fromYear ? parseInt(fromYear, 10) : undefined,
-        toYear: toYear ? parseInt(toYear, 10) : undefined,
+        fromYear: fromYearNum,
+        toYear: toYearNum,
         sort: sort ?? undefined,
       }
     );
 
-    const admin = createAdminClient();
     const ingested = await ingestWorks(admin, openalexResults);
+
+    // Upsert search_cache for page 1
+    if (page === 1) {
+      const hash = computeQueryHash(query, fromYearNum ?? null, toYearNum ?? null, sort);
+      const workIds = ingested.map((w) => w.id as string);
+
+      await admin
+        .from("search_cache")
+        .upsert(
+          {
+            query_hash: hash,
+            query: query.trim(),
+            from_year: fromYearNum ?? null,
+            to_year: toYearNum ?? null,
+            sort: sort ?? null,
+            work_ids: workIds,
+            result_count: (meta.count as number) ?? 0,
+            refreshed_at: new Date().toISOString(),
+          },
+          { onConflict: "query_hash" }
+        );
+    }
 
     // Track usage
     await admin.rpc("increment_usage", {

@@ -802,6 +802,89 @@ export type Database = {
       }
       Relationships: []
     }
+    saved_searches: {
+      Row: {
+        id: string
+        user_id: string
+        query: string
+        from_year: number | null
+        to_year: number | null
+        sort: string | null
+        result_count: number
+        work_ids: string[]
+        cache_id: string | null
+        created_at: string | null
+      }
+      Insert: {
+        id?: string
+        user_id: string
+        query: string
+        from_year?: number | null
+        to_year?: number | null
+        sort?: string | null
+        result_count?: number
+        work_ids?: string[]
+        cache_id?: string | null
+        created_at?: string | null
+      }
+      Update: {
+        id?: string
+        user_id?: string
+        query?: string
+        from_year?: number | null
+        to_year?: number | null
+        sort?: string | null
+        result_count?: number
+        work_ids?: string[]
+        cache_id?: string | null
+        created_at?: string | null
+      }
+      Relationships: [
+        {
+          foreignKeyName: "saved_searches_cache_id_fkey"
+          columns: ["cache_id"]
+          isOneToOne: false
+          referencedRelation: "search_cache"
+          referencedColumns: ["id"]
+        },
+      ]
+    }
+    search_cache: {
+      Row: {
+        id: string
+        query_hash: string
+        query: string
+        from_year: number | null
+        to_year: number | null
+        sort: string | null
+        result_count: number
+        work_ids: string[]
+        refreshed_at: string
+      }
+      Insert: {
+        id?: string
+        query_hash: string
+        query: string
+        from_year?: number | null
+        to_year?: number | null
+        sort?: string | null
+        result_count?: number
+        work_ids?: string[]
+        refreshed_at?: string
+      }
+      Update: {
+        id?: string
+        query_hash?: string
+        query?: string
+        from_year?: number | null
+        to_year?: number | null
+        sort?: string | null
+        result_count?: number
+        work_ids?: string[]
+        refreshed_at?: string
+      }
+      Relationships: []
+    }
     paper_notes: {
       Row: {
         id: string

@@ -90,6 +90,20 @@ export interface TopicWithChildren {
   paper_count?: number;
 }
 
+// ---- Saved Searches ----
+
+export interface SavedSearch {
+  id: string;
+  query: string;
+  from_year: number | null;
+  to_year: number | null;
+  sort: string | null;
+  result_count: number;
+  work_ids: string[];
+  cache_id: string | null;
+  created_at: string;
+}
+
 // ---- Paper Notes ----
 
 export interface PaperNote {
