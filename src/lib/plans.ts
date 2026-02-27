@@ -8,6 +8,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     aiSummariesOnDemand: false,
     exportEnabled: false,
   },
+  alpha: {
+    searchesPerDay: 100,
+    savedPapers: null,
+    collections: 5,
+    aiSummariesOnDemand: false,
+    exportEnabled: true,
+  },
   researcher: {
     searchesPerDay: null, // unlimited
     savedPapers: null,
@@ -26,10 +33,11 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
 
 export const PLAN_DISPLAY: Record<PlanType, { name: string; price: string; yearlyPrice: string }> = {
   free: { name: "Explorer", price: "Free", yearlyPrice: "Free" },
+  alpha: { name: "Alpha", price: "Free", yearlyPrice: "Free" },
   researcher: { name: "Researcher", price: "$8/mo", yearlyPrice: "$80/yr" },
   lab: { name: "Lab", price: "$8/member/mo", yearlyPrice: "$80/member/yr" },
 };
 
 export function isPaid(plan: PlanType): boolean {
-  return plan === "researcher" || plan === "lab";
+  return plan === "alpha" || plan === "researcher" || plan === "lab";
 }

@@ -1128,7 +1128,7 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
-      plan_type: "free" | "researcher" | "lab"
+      plan_type: "free" | "alpha" | "researcher" | "lab"
       subscription_status: "active" | "canceled" | "past_due" | "trialing" | "incomplete"
       lab_role: "owner" | "admin" | "member"
       feature_status: "planned" | "in_progress" | "shipped" | "considering"
@@ -1260,7 +1260,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      plan_type: ["free", "researcher", "lab"] as const,
+      plan_type: ["free", "alpha", "researcher", "lab"] as const,
       subscription_status: ["active", "canceled", "past_due", "trialing", "incomplete"] as const,
       lab_role: ["owner", "admin", "member"] as const,
       feature_status: ["planned", "in_progress", "shipped", "considering"] as const,

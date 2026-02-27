@@ -119,7 +119,7 @@ export interface PaperNote {
 
 // ---- Plans & Subscriptions ----
 
-export type PlanType = "free" | "researcher" | "lab";
+export type PlanType = "free" | "alpha" | "researcher" | "lab";
 
 export interface UserPlan {
   plan: PlanType;
