@@ -57,6 +57,10 @@ export async function POST(request: NextRequest) {
         );
         // In Stripe SDK v20, current_period_start/end moved to SubscriptionItem
         const item = sub.items.data[0];
+        if (!item) {
+          console.error("Subscription has no line items:", sub.id);
+          return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
+        }
 
         const { error: upsertError } = await admin.from("subscriptions").upsert(
           {
@@ -82,6 +86,10 @@ export async function POST(request: NextRequest) {
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
         const item = sub.items.data[0];
+        if (!item) {
+          console.error("Subscription has no line items:", sub.id);
+          return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
+        }
 
         const { data: existing } = await admin
           .from("subscriptions")
@@ -123,6 +131,28 @@ export async function POST(request: NextRequest) {
         }
         break;
       }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId =
+          typeof invoice.subscription === "string"
+            ? invoice.subscription
+            : invoice.subscription?.id;
+        if (!subscriptionId) break;
+
+        const { error: pastDueError } = await admin
+          .from("subscriptions")
+          .update({ status: "past_due" })
+          .eq("stripe_subscription_id", subscriptionId);
+        if (pastDueError) {
+          console.error("Supabase update (past_due) failed:", pastDueError);
+          return NextResponse.json({ error: "Database error" }, { status: 500 });
+        }
+        break;
+      }
+
+      default:
+        console.log("Unhandled Stripe event:", event.type);
     }
   } catch (err) {
     console.error("Webhook handler error:", err);
