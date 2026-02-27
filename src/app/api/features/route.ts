@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { requireApiUser } from "@/lib/supabase/server";
+import { createClient, requireApiUser } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import type { Database } from "@/lib/types/database";
+
+type FeatureStatus = Database["public"]["Enums"]["feature_status"];
+const VALID_STATUSES: FeatureStatus[] = ["planned", "in_progress", "shipped", "considering"];
 
 export async function GET() {
   const supabase = await createClient();
@@ -62,12 +64,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
   }
 
+  const featureStatus = (status || "planned") as FeatureStatus;
+  if (!VALID_STATUSES.includes(featureStatus)) {
+    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("features")
     .insert({
       title: title.trim(),
       description: description?.trim() || null,
-      status: (status || "planned") as Database["public"]["Enums"]["feature_status"],
+      status: featureStatus,
       priority: priority ?? 0,
       created_by: user.id,
     })

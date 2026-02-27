@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { requireApiUser } from "@/lib/supabase/server";
+import { createClient, requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
 import type { Database } from "@/lib/types/database";
+
+type FeedbackCategory = Database["public"]["Enums"]["feedback_category"];
+const VALID_CATEGORIES: FeedbackCategory[] = ["general", "bug", "feature_request", "other"];
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -26,12 +28,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Feedback too long (max 5000 chars)" }, { status: 400 });
   }
 
+  const feedbackCategory = (category || "general") as FeedbackCategory;
+  if (!VALID_CATEGORIES.includes(feedbackCategory)) {
+    return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+  }
+
   // Use admin client to bypass RLS for insert (anonymous users can submit)
   const admin = createAdminClient();
   const { error } = await admin.from("feedback").insert({
     user_id: user?.id ?? null,
     email: user?.email ?? email ?? null,
-    category: (category || "general") as Database["public"]["Enums"]["feedback_category"],
+    category: feedbackCategory,
     content: content.trim(),
   });
 
