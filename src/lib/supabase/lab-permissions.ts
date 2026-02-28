@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireLabRole } from "@/lib/supabase/labs";
-import { untyped } from "@/lib/supabase/untyped";
 
 export type LabPermission =
   | "create_collection"
@@ -41,7 +40,7 @@ export async function hasLabPermission(
   if (!role) return false;
   if (role === "owner") return true;
 
-  const { data: lab } = await untyped(supabase)
+  const { data: lab } = await supabase
     .from("labs")
     .select("role_permissions")
     .eq("id", labId)
@@ -58,7 +57,7 @@ export async function getLabPermissions(
   supabase: SupabaseClient,
   labId: string
 ): Promise<Record<string, Record<LabPermission, boolean>>> {
-  const { data: lab } = await untyped(supabase)
+  const { data: lab } = await supabase
     .from("labs")
     .select("role_permissions")
     .eq("id", labId)

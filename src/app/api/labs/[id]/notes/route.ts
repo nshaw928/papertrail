@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { hasLabPermission } from "@/lib/supabase/lab-permissions";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: list lab notes for a paper
 export async function GET(
@@ -24,7 +23,7 @@ export async function GET(
     return NextResponse.json({ error: "work_id is required" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_paper_notes")
     .select("id, user_id, content, anchor_quote, created_at, updated_at")
     .eq("lab_id", labId)
@@ -78,7 +77,7 @@ export async function POST(
     return NextResponse.json({ error: "Quote too long (max 500 chars)" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_paper_notes")
     .insert({
       lab_id: labId,

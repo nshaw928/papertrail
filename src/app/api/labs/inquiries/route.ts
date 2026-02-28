@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { untyped } from "@/lib/supabase/untyped";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_LAB_SIZES = new Set(["2-10", "10-25", "25-50", "50+"]);
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  const { error } = await untyped(admin).from("lab_inquiries").insert({
+  const { error } = await admin.from("lab_inquiries").insert({
     name: name.trim(),
     email: email.trim().toLowerCase(),
     institution: institution?.trim() || null,

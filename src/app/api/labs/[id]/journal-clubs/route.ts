@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { hasLabPermission } from "@/lib/supabase/lab-permissions";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: list journal club sessions
 export async function GET(
@@ -22,7 +21,7 @@ export async function GET(
   const tab = request.nextUrl.searchParams.get("tab") ?? "upcoming";
   const now = new Date().toISOString();
 
-  let query = untyped(supabase)
+  let query = supabase
     .from("journal_clubs")
     .select("id, work_id, title, scheduled_at, presenter_id, notes, created_by, created_at, journal_club_files(count)")
     .eq("lab_id", labId);
@@ -96,7 +95,7 @@ export async function POST(
     return NextResponse.json({ error: "Notes too long (max 5000 chars)" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("journal_clubs")
     .insert({
       lab_id: labId,

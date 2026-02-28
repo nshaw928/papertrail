@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
-import { untyped } from "@/lib/supabase/untyped";
 
 // PATCH: update a lab note (author only)
 export async function PATCH(
@@ -28,7 +27,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Content too long (max 5000 chars)" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_paper_notes")
     .update({ content, updated_at: new Date().toISOString() })
     .eq("id", nid)
@@ -60,7 +59,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Not a member" }, { status: 403 });
   }
 
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("lab_paper_notes")
     .delete()
     .eq("id", nid)

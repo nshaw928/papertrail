@@ -3,7 +3,7 @@ import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasLabPermission } from "@/lib/supabase/lab-permissions";
-import { untyped } from "@/lib/supabase/untyped";
+
 import { randomUUID } from "crypto";
 
 const ALLOWED_EXTENSIONS = new Set([
@@ -47,7 +47,7 @@ export async function POST(
   }
 
   // Verify journal club exists and belongs to this lab
-  const { data: jc } = await untyped(supabase)
+  const { data: jc } = await supabase
     .from("journal_clubs")
     .select("id")
     .eq("id", jid)
@@ -108,7 +108,7 @@ export async function POST(
   }
 
   // Pre-create the file record so the client can confirm
-  const { data: fileRecord, error: fileError } = await untyped(supabase)
+  const { data: fileRecord, error: fileError } = await supabase
     .from("journal_club_files")
     .insert({
       journal_club_id: jid,

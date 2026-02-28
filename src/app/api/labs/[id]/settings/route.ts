@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
-import { untyped } from "@/lib/supabase/untyped";
 
 const VALID_PERMISSIONS = new Set([
   "create_collection",
@@ -50,7 +49,7 @@ export async function GET(
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  const { data: lab, error } = await untyped(supabase)
+  const { data: lab, error } = await supabase
     .from("labs")
     .select("id, name, role_permissions")
     .eq("id", labId)
@@ -115,7 +114,7 @@ export async function PATCH(
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("labs")
     .update(updates)
     .eq("id", labId)

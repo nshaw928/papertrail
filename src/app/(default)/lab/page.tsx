@@ -2,7 +2,6 @@ import { requireUser } from "@/lib/supabase/server";
 import { getUserLab } from "@/lib/supabase/labs";
 import LabLanding from "./lab-landing";
 import LabDashboardOverview from "./lab-dashboard-overview";
-import { untyped } from "@/lib/supabase/untyped";
 
 export default async function LabPage() {
   const { supabase, user } = await requireUser();
@@ -40,22 +39,21 @@ export default async function LabPage() {
   }
 
   // Fetch recent announcements and upcoming journal club for dashboard
-  const db = untyped(supabase);
   const [announcementsRes, journalClubRes, collectionsRes] = await Promise.all([
-    db
+    supabase
       .from("lab_announcements")
       .select("id, user_id, work_id, content, created_at")
       .eq("lab_id", lab.lab_id)
       .order("created_at", { ascending: false })
       .limit(5),
-    db
+    supabase
       .from("journal_clubs")
       .select("id, work_id, title, scheduled_at, presenter_id")
       .eq("lab_id", lab.lab_id)
       .gte("scheduled_at", new Date().toISOString())
       .order("scheduled_at", { ascending: true })
       .limit(1),
-    db
+    supabase
       .from("lab_collections")
       .select("id, name, lab_collection_works(count)")
       .eq("lab_id", lab.lab_id)

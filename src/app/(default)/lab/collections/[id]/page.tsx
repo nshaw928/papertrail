@@ -3,7 +3,6 @@ import { requireUser } from "@/lib/supabase/server";
 import { getUserLab } from "@/lib/supabase/labs";
 import { loadWorksWithRelations } from "@/lib/supabase/queries";
 import LabCollectionDetail from "./lab-collection-detail";
-import { untyped } from "@/lib/supabase/untyped";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -17,8 +16,7 @@ export default async function LabCollectionPage({ params }: PageProps) {
   if (!lab) notFound();
 
   // Fetch collection
-  const db = untyped(supabase);
-  const { data: collection } = await db
+  const { data: collection } = await supabase
     .from("lab_collections")
     .select("id, name, description, created_by, created_at, lab_id")
     .eq("id", id)
@@ -29,7 +27,7 @@ export default async function LabCollectionPage({ params }: PageProps) {
   if (!col || col.lab_id !== lab.lab_id) notFound();
 
   // Fetch works in collection
-  const { data: collectionWorks } = await db
+  const { data: collectionWorks } = await supabase
     .from("lab_collection_works")
     .select("work_id, added_by, added_at")
     .eq("lab_collection_id", id)
@@ -51,7 +49,7 @@ export default async function LabCollectionPage({ params }: PageProps) {
   }
 
   // Fetch contributors
-  const { data: contributors } = await db
+  const { data: contributors } = await supabase
     .from("lab_collection_contributors")
     .select("user_id")
     .eq("lab_collection_id", id);

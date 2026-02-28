@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
-import { untyped } from "@/lib/supabase/untyped";
 
 // DELETE: delete an announcement
 export async function DELETE(
@@ -19,7 +18,7 @@ export async function DELETE(
   }
 
   // RLS handles: author or admin can delete
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("lab_announcements")
     .delete()
     .eq("id", aid)

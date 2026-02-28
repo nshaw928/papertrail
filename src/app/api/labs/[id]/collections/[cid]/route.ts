@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
-import { untyped } from "@/lib/supabase/untyped";
 
 // PATCH: update collection name/description
 export async function PATCH(
@@ -19,7 +18,7 @@ export async function PATCH(
   }
 
   // Only creator or admin/owner can update
-  const { data: collection } = await untyped(supabase)
+  const { data: collection } = await supabase
     .from("lab_collections")
     .select("created_by")
     .eq("id", cid)
@@ -63,7 +62,7 @@ export async function PATCH(
 
   updates.updated_at = new Date().toISOString();
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_collections")
     .update(updates)
     .eq("id", cid)
@@ -95,7 +94,7 @@ export async function DELETE(
   }
 
   // Only creator or admin/owner can delete
-  const { data: collection } = await untyped(supabase)
+  const { data: collection } = await supabase
     .from("lab_collections")
     .select("created_by")
     .eq("id", cid)
@@ -110,7 +109,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("lab_collections")
     .delete()
     .eq("id", cid)

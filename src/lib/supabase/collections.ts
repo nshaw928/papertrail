@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { untyped } from "@/lib/supabase/untyped";
 
 /**
  * Verify a collection belongs to a lab. Returns the collection or null.
@@ -9,7 +8,7 @@ export async function verifyCollectionOwnership(
   collectionId: string,
   labId: string
 ) {
-  const { data } = await untyped(supabase)
+  const { data } = await supabase
     .from("lab_collections")
     .select("id, created_by")
     .eq("id", collectionId)
@@ -38,7 +37,7 @@ export async function hasLabCollectionWriteAccess(
   if (collection.created_by === userId) return true;
 
   // Check if user is on the contributors list
-  const { data: contributor } = await untyped(supabase)
+  const { data: contributor } = await supabase
     .from("lab_collection_contributors")
     .select("user_id")
     .eq("lab_collection_id", collectionId)

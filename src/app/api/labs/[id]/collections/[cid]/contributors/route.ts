@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { verifyCollectionOwnership } from "@/lib/supabase/collections";
-import { untyped } from "@/lib/supabase/untyped";
 
 const MAX_CONTRIBUTORS = 100;
 
@@ -27,7 +26,7 @@ export async function GET(
     return NextResponse.json({ error: "Collection not found" }, { status: 404 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_collection_contributors")
     .select("user_id")
     .eq("lab_collection_id", cid);
@@ -76,7 +75,7 @@ export async function PUT(
   // Delete existing and insert new in sequence
   // If insert fails, the old list is already gone — acceptable tradeoff
   // since the caller can retry with the correct list
-  await untyped(supabase)
+  await supabase
     .from("lab_collection_contributors")
     .delete()
     .eq("lab_collection_id", cid);
@@ -87,7 +86,7 @@ export async function PUT(
       user_id: uid,
     }));
 
-    const { error } = await untyped(supabase)
+    const { error } = await supabase
       .from("lab_collection_contributors")
       .insert(rows);
 

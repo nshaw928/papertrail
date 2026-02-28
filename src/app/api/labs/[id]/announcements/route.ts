@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { hasLabPermission } from "@/lib/supabase/lab-permissions";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: list lab announcements
 export async function GET(
@@ -22,7 +21,7 @@ export async function GET(
   const limit = parseInt(request.nextUrl.searchParams.get("limit") ?? "20");
   const offset = parseInt(request.nextUrl.searchParams.get("offset") ?? "0");
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_announcements")
     .select("id, user_id, work_id, content, created_at")
     .eq("lab_id", labId)
@@ -67,7 +66,7 @@ export async function POST(
     return NextResponse.json({ error: "Content too long (max 2000 chars)" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_announcements")
     .insert({
       lab_id: labId,

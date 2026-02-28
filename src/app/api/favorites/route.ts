@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: list user's favorite collections
 export async function GET() {
@@ -8,7 +7,7 @@ export async function GET() {
   if ("error" in auth) return auth.error;
   const { supabase } = auth;
 
-  const { data, error } = await untyped(supabase).rpc("get_sidebar_favorites");
+  const { data, error } = await supabase.rpc("get_sidebar_favorites");
 
   if (error) {
     console.error("Failed to fetch favorites:", error.message);
@@ -41,7 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid collection_type" }, { status: 400 });
   }
 
-  const { error } = await untyped(supabase).from("collection_favorites").upsert(
+  const { error } = await supabase.from("collection_favorites").upsert(
     {
       user_id: user.id,
       collection_type,
@@ -77,7 +76,7 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("collection_favorites")
     .delete()
     .eq("user_id", user.id)

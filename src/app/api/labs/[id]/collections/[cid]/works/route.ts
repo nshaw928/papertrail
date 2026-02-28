@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { hasLabCollectionWriteAccess, verifyCollectionOwnership } from "@/lib/supabase/collections";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: list papers in a lab collection
 export async function GET(
@@ -25,7 +24,7 @@ export async function GET(
     return NextResponse.json({ error: "Collection not found" }, { status: 404 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_collection_works")
     .select("work_id, added_by, added_at")
     .eq("lab_collection_id", cid)
@@ -65,7 +64,7 @@ export async function POST(
     return NextResponse.json({ error: "work_id is required" }, { status: 400 });
   }
 
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("lab_collection_works")
     .upsert(
       { lab_collection_id: cid, work_id: workId, added_by: user.id },
@@ -108,7 +107,7 @@ export async function DELETE(
   }
 
   // RLS handles who can delete (adder or admin)
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("lab_collection_works")
     .delete()
     .eq("lab_collection_id", cid)

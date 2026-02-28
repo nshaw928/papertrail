@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { hasLabPermission } from "@/lib/supabase/lab-permissions";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: list lab collections
 // Supports ?work_id=XXX to include an `is_member` flag per collection
@@ -22,7 +21,7 @@ export async function GET(
 
   const workId = request.nextUrl.searchParams.get("work_id");
 
-  const { data: collections, error } = await untyped(supabase)
+  const { data: collections, error } = await supabase
     .from("lab_collections")
     .select("id, name, description, created_by, created_at, lab_collection_works(count)")
     .eq("lab_id", labId)
@@ -37,7 +36,7 @@ export async function GET(
   if (workId) {
     const collectionIds = (collections ?? []).map((c) => c.id);
     if (collectionIds.length > 0) {
-      const { data: memberRows } = await untyped(supabase)
+      const { data: memberRows } = await supabase
         .from("lab_collection_works")
         .select("lab_collection_id")
         .eq("work_id", workId)
@@ -97,7 +96,7 @@ export async function POST(
     return NextResponse.json({ error: "Description too long (max 1000 chars)" }, { status: 400 });
   }
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("lab_collections")
     .insert({ lab_id: labId, name, description, created_by: user.id })
     .select("id, name, description, created_by, created_at")

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
-import { untyped } from "@/lib/supabase/untyped";
 
 // GET: get a single journal club session with its files
 export async function GET(
@@ -18,7 +17,7 @@ export async function GET(
     return NextResponse.json({ error: "Not a member" }, { status: 403 });
   }
 
-  const { data: jc, error } = await untyped(supabase)
+  const { data: jc, error } = await supabase
     .from("journal_clubs")
     .select("id, work_id, title, scheduled_at, presenter_id, notes, created_by, created_at, updated_at")
     .eq("id", jid)
@@ -30,7 +29,7 @@ export async function GET(
   }
 
   // Fetch files for this journal club
-  const { data: files } = await untyped(supabase)
+  const { data: files } = await supabase
     .from("journal_club_files")
     .select("id, file_name, file_size, mime_type, uploaded_by, uploaded_at")
     .eq("journal_club_id", jid)
@@ -54,7 +53,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Not a member" }, { status: 403 });
   }
 
-  const { data: jc } = await untyped(supabase)
+  const { data: jc } = await supabase
     .from("journal_clubs")
     .select("created_by")
     .eq("id", jid)
@@ -105,7 +104,7 @@ export async function PATCH(
 
   updates.updated_at = new Date().toISOString();
 
-  const { data, error } = await untyped(supabase)
+  const { data, error } = await supabase
     .from("journal_clubs")
     .update(updates)
     .eq("id", jid)
@@ -137,7 +136,7 @@ export async function DELETE(
   }
 
   // RLS handles creator or admin
-  const { error } = await untyped(supabase)
+  const { error } = await supabase
     .from("journal_clubs")
     .delete()
     .eq("id", jid)

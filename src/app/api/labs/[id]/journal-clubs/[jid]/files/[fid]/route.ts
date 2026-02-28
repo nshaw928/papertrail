@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { requireLabRole } from "@/lib/supabase/labs";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { untyped } from "@/lib/supabase/untyped";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Verify the journal club belongs to the lab. Returns true if valid.
  */
 async function verifyJournalClubOwnership(
-  supabase: ReturnType<typeof untyped>,
+  supabase: SupabaseClient,
   jid: string,
   labId: string
 ): Promise<boolean> {
@@ -36,14 +36,12 @@ export async function GET(
     return NextResponse.json({ error: "Not a member" }, { status: 403 });
   }
 
-  const db = untyped(supabase);
-
   // Verify journal club belongs to this lab
-  if (!(await verifyJournalClubOwnership(db, jid, labId))) {
+  if (!(await verifyJournalClubOwnership(supabase, jid, labId))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { data: file } = await db
+  const { data: file } = await supabase
     .from("journal_club_files")
     .select("storage_path, file_name")
     .eq("id", fid)
@@ -84,15 +82,13 @@ export async function DELETE(
     return NextResponse.json({ error: "Not a member" }, { status: 403 });
   }
 
-  const db = untyped(supabase);
-
   // Verify journal club belongs to this lab
-  if (!(await verifyJournalClubOwnership(db, jid, labId))) {
+  if (!(await verifyJournalClubOwnership(supabase, jid, labId))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   // Get file record — verify ownership for non-admins
-  const { data: file } = await db
+  const { data: file } = await supabase
     .from("journal_club_files")
     .select("storage_path, uploaded_by")
     .eq("id", fid)
@@ -108,7 +104,7 @@ export async function DELETE(
   }
 
   // Delete DB record first (safer: orphaned storage > broken DB reference)
-  const { error } = await db
+  const { error } = await supabase
     .from("journal_club_files")
     .delete()
     .eq("id", fid)
