@@ -15,6 +15,9 @@ import { enrichCitations } from "@/lib/openalex/enrich-citations";
 import { hydrateStubs } from "@/lib/openalex/hydrate";
 import { isSafeUrl, levelName } from "@/lib/utils";
 import PaperQuotes from "@/components/paper-quotes";
+import ShareToLab from "@/components/share-to-lab";
+import AddToCollection from "@/components/add-to-collection";
+import LabPaperNotesLoader from "@/components/lab-paper-notes-loader";
 import type { WorkWithRelations } from "@/lib/types/app";
 
 function TopicBadges({ topics }: { topics: { id: string; name: string; score: number | null }[] }) {
@@ -152,7 +155,11 @@ export default async function PaperPage({ params }: PageProps) {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <h1 className="text-2xl font-bold leading-tight">{paper.title}</h1>
-        <SaveButton workId={id} initialSaved={isSaved} size="lg" />
+        <div className="flex items-center gap-2 shrink-0">
+          {user && <AddToCollection workId={id} />}
+          {user && <ShareToLab workId={id} paperTitle={paper.title} />}
+          <SaveButton workId={id} initialSaved={isSaved} size="lg" />
+        </div>
       </div>
 
       {/* Authors */}
@@ -254,6 +261,9 @@ export default async function PaperPage({ params }: PageProps) {
 
       {/* Quotes & Notes */}
       {user && <PaperQuotes workId={id} />}
+
+      {/* Lab Notes */}
+      {user && <LabPaperNotesLoader workId={id} />}
 
       {/* Abstract */}
       {paper.abstract && (

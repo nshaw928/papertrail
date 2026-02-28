@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,16 +65,18 @@ const tiers = [
     name: "Lab",
     monthly: { price: "$8", period: "/member/month" },
     yearly: { price: "$80", period: "/member/year" },
-    description: "For research groups. All Researcher features plus collaboration.",
+    description: "For research groups of 2-50. All Researcher features plus collaboration.",
     features: [
       { text: "Everything in Researcher", included: true },
-      { text: "Shared collections (coming soon)", included: true },
-      { text: "Pinned lab collections (coming soon)", included: true },
-      { text: "Lab library feed (coming soon)", included: true },
-      { text: "Member management", included: true },
-      { text: "Admin dashboard (coming soon)", included: true },
-      { text: "Lab notes on papers (coming soon)", included: true },
+      { text: "Shared lab collections", included: true },
+      { text: "Lab announcements feed", included: true },
+      { text: "Journal club with file uploads", included: true },
+      { text: "Lab notes on papers", included: true },
+      { text: "Member management & roles", included: true },
+      { text: "Admin dashboard & permissions", included: true },
+      { text: "Favorite collections sidebar", included: true },
     ],
+    gradient: true,
   },
 ];
 
@@ -153,7 +156,10 @@ export default function PricingCards({
         return (
         <Card
           key={tier.plan}
-          className={cn(tier.popular && "border-primary relative")}
+          className={cn(
+            tier.popular && "border-primary relative",
+            tier.gradient && "relative border-transparent bg-gradient-to-b from-primary/10 to-transparent"
+          )}
         >
           {tier.popular && (
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -186,7 +192,7 @@ export default function PricingCards({
               ))}
             </ul>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-2">
             {currentPlan === tier.plan ? (
               <Button variant="outline" className="w-full" disabled>
                 Current Plan
@@ -201,7 +207,12 @@ export default function PricingCards({
                 onClick={() => handleUpgrade(tier.plan)}
                 disabled={loading !== null}
               >
-                {loading === tier.plan ? "Loading..." : `Upgrade to ${tier.name}`}
+                {loading === tier.plan ? "Loading..." : `Get Started`}
+              </Button>
+            )}
+            {tier.plan === "lab" && currentPlan !== "lab" && (
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/pricing/contact">Talk to Us</Link>
               </Button>
             )}
           </CardFooter>

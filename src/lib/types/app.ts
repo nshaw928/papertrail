@@ -134,6 +134,14 @@ export interface PlanLimits {
   collections: number | null;
   aiSummariesOnDemand: boolean;
   exportEnabled: boolean;
+  // Lab-specific limits
+  labCollections: number | null;
+  labMembers: number | null;
+  journalClubsPerMonth: number | null;
+  fileStorageMb: number | null;
+  announcementsEnabled: boolean;
+  journalClubEnabled: boolean;
+  labNotesEnabled: boolean;
 }
 
 // ---- Labs ----

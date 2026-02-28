@@ -7,6 +7,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: 1,
     aiSummariesOnDemand: false,
     exportEnabled: false,
+    labCollections: 0,
+    labMembers: 0,
+    journalClubsPerMonth: 0,
+    fileStorageMb: 0,
+    announcementsEnabled: false,
+    journalClubEnabled: false,
+    labNotesEnabled: false,
   },
   alpha: {
     searchesPerDay: 100,
@@ -14,6 +21,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: 5,
     aiSummariesOnDemand: false,
     exportEnabled: true,
+    labCollections: 0,
+    labMembers: 0,
+    journalClubsPerMonth: 0,
+    fileStorageMb: 0,
+    announcementsEnabled: false,
+    journalClubEnabled: false,
+    labNotesEnabled: false,
   },
   researcher: {
     searchesPerDay: null, // unlimited
@@ -21,6 +35,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: null,
     aiSummariesOnDemand: true,
     exportEnabled: true,
+    labCollections: 0,
+    labMembers: 0,
+    journalClubsPerMonth: 0,
+    fileStorageMb: 0,
+    announcementsEnabled: false,
+    journalClubEnabled: false,
+    labNotesEnabled: false,
   },
   lab: {
     searchesPerDay: null,
@@ -28,6 +49,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     collections: null,
     aiSummariesOnDemand: true,
     exportEnabled: true,
+    labCollections: null, // unlimited
+    labMembers: null, // unlimited
+    journalClubsPerMonth: null, // unlimited
+    fileStorageMb: 500,
+    announcementsEnabled: true,
+    journalClubEnabled: true,
+    labNotesEnabled: true,
   },
 };
 

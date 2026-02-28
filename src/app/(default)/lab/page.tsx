@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/supabase/server";
 import { getUserLab } from "@/lib/supabase/labs";
 import LabLanding from "./lab-landing";
-import LabDashboard from "./lab-dashboard";
+import LabDashboardOverview from "./lab-dashboard-overview";
+import { untyped } from "@/lib/supabase/untyped";
 
 export default async function LabPage() {
   const { supabase, user } = await requireUser();
@@ -38,22 +39,62 @@ export default async function LabPage() {
     );
   }
 
-  // Fetch members and invitations
-  const { data: membersData } = await supabase
+  // Fetch recent announcements and upcoming journal club for dashboard
+  const db = untyped(supabase);
+  const [announcementsRes, journalClubRes, collectionsRes] = await Promise.all([
+    db
+      .from("lab_announcements")
+      .select("id, user_id, work_id, content, created_at")
+      .eq("lab_id", lab.lab_id)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    db
+      .from("journal_clubs")
+      .select("id, work_id, title, scheduled_at, presenter_id")
+      .eq("lab_id", lab.lab_id)
+      .gte("scheduled_at", new Date().toISOString())
+      .order("scheduled_at", { ascending: true })
+      .limit(1),
+    db
+      .from("lab_collections")
+      .select("id, name, lab_collection_works(count)")
+      .eq("lab_id", lab.lab_id)
+      .order("created_at", { ascending: false })
+      .limit(4),
+  ]);
+
+  // Get member count
+  const { count: memberCount } = await supabase
     .from("lab_members")
-    .select("user_id, role, invited_email, joined_at")
+    .select("*", { count: "exact", head: true })
     .eq("lab_id", lab.lab_id);
 
-  const { data: invitations } = await supabase
-    .from("lab_invitations")
-    .select("id, email, role, created_at, expires_at")
-    .eq("lab_id", lab.lab_id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const collections = ((collectionsRes.data ?? []) as any[]).map((c: any) => ({
+    id: c.id as string,
+    name: c.name as string,
+    work_count: (c.lab_collection_works as { count: number }[])?.[0]?.count ?? 0,
+  }));
 
   return (
-    <LabDashboard
+    <LabDashboardOverview
       lab={{ id: lab.lab_id, name: lab.lab_name, role: lab.role }}
-      members={membersData ?? []}
-      invitations={invitations ?? []}
+      memberCount={memberCount ?? 0}
+      recentAnnouncements={(announcementsRes.data ?? []) as {
+        id: string;
+        user_id: string;
+        work_id: string | null;
+        content: string;
+        created_at: string;
+      }[]}
+      nextJournalClub={(journalClubRes.data?.[0] ?? null) as {
+        id: string;
+        work_id: string;
+        title: string | null;
+        scheduled_at: string;
+        presenter_id: string | null;
+      } | null}
+      collections={collections}
     />
   );
 }

@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/app-sidebar";
+import type { SidebarFavorite } from "@/components/app-sidebar";
+import { untyped } from "@/lib/supabase/untyped";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,13 +42,24 @@ export default async function RootLayout({
       ).data ?? [])
     : [];
 
+  // Fetch sidebar favorites (single query via DB function)
+  let favorites: SidebarFavorite[] = [];
+  if (user) {
+    try {
+      const { data } = await untyped(supabase).rpc("get_sidebar_favorites");
+      favorites = (data ?? []) as SidebarFavorite[];
+    } catch {
+      // Function may not exist yet if migration hasn't run
+    }
+  }
+
   return (
     <html lang="en" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarProvider>
-          <AppSidebar user={user} collections={collections} />
+          <AppSidebar user={user} collections={collections} favorites={favorites} />
           <SidebarInset>
             <header className="flex h-12 shrink-0 items-center border-b px-4">
               <SidebarTrigger className="-ml-1" />

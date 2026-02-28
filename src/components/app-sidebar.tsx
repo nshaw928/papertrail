@@ -19,6 +19,7 @@ import {
   FlaskConical,
   Info,
   MessageSquare,
+  Star,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,12 +53,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { signOut } from "@/app/(auth)/actions";
 
+export interface SidebarFavorite {
+  collection_type: "personal" | "lab";
+  collection_id: string;
+  name: string;
+}
+
 interface AppSidebarProps {
   user: User | null;
   collections: { id: string; name: string }[];
+  favorites?: SidebarFavorite[];
 }
 
-export default function AppSidebar({ user, collections }: AppSidebarProps) {
+export default function AppSidebar({ user, collections, favorites = [] }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -75,6 +83,8 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
       router.refresh();
     }
   }
+
+  const hasFavorites = favorites.length > 0;
 
   return (
     <Sidebar collapsible="icon">
@@ -150,7 +160,57 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                {collections.length > 0 && (
+
+                {/* Favorites section */}
+                {hasFavorites ? (
+                  <Collapsible defaultOpen className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <Star />
+                          <span>Collections</span>
+                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {favorites.map((f) => {
+                            const href =
+                              f.collection_type === "personal"
+                                ? `/library/collections/${f.collection_id}`
+                                : `/lab/collections/${f.collection_id}`;
+                            return (
+                              <SidebarMenuSubItem key={`${f.collection_type}-${f.collection_id}`}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={pathname === href}
+                                >
+                                  <Link href={href} className="flex items-center gap-1">
+                                    {f.collection_type === "lab" && (
+                                      <FlaskConical className="h-3 w-3 shrink-0 opacity-50" />
+                                    )}
+                                    <span className="truncate">{f.name}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            );
+                          })}
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <Link
+                                href="/library"
+                                className="text-muted-foreground"
+                              >
+                                <FolderOpen className="h-4 w-4" />
+                                <span>Manage</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ) : collections.length > 0 ? (
                   <Collapsible defaultOpen className="group/collapsible">
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
@@ -187,8 +247,7 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                       </CollapsibleContent>
                     </SidebarMenuItem>
                   </Collapsible>
-                )}
-                {collections.length === 0 && (
+                ) : (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       onClick={handleNewCollection}
@@ -212,7 +271,7 @@ export default function AppSidebar({ user, collections }: AppSidebarProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === "/lab"}
+                    isActive={pathname.startsWith("/lab")}
                   >
                     <Link href="/lab">
                       <FlaskConical />

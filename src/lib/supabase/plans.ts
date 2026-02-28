@@ -57,6 +57,18 @@ export async function getDailyUsage(
   };
 }
 
+export type LimitAction =
+  | "search"
+  | "save_paper"
+  | "create_collection"
+  | "ai_summary"
+  | "export"
+  | "create_lab_collection"
+  | "post_announcement"
+  | "schedule_journal_club"
+  | "upload_file"
+  | "create_lab_note";
+
 /**
  * Check if a user can perform an action given their plan and current usage.
  * Returns { allowed: true } or { allowed: false, reason: string }.
@@ -64,7 +76,7 @@ export async function getDailyUsage(
 export async function checkLimit(
   supabase: SupabaseClient,
   userId: string,
-  action: "search" | "save_paper" | "create_collection" | "ai_summary" | "export"
+  action: LimitAction
 ): Promise<{ allowed: true } | { allowed: false; reason: string }> {
   const userPlan = await getUserPlan(supabase, userId);
   const limits = PLAN_LIMITS[userPlan.plan];
@@ -131,6 +143,55 @@ export async function checkLimit(
       }
       return { allowed: true };
     }
+
+    case "create_lab_collection": {
+      if (limits.labCollections === 0) {
+        return {
+          allowed: false,
+          reason: "Lab collections require a Lab plan.",
+        };
+      }
+      return { allowed: true };
+    }
+
+    case "post_announcement": {
+      if (!limits.announcementsEnabled) {
+        return {
+          allowed: false,
+          reason: "Announcements require a Lab plan.",
+        };
+      }
+      return { allowed: true };
+    }
+
+    case "schedule_journal_club": {
+      if (!limits.journalClubEnabled) {
+        return {
+          allowed: false,
+          reason: "Journal club requires a Lab plan.",
+        };
+      }
+      return { allowed: true };
+    }
+
+    case "upload_file": {
+      if (limits.fileStorageMb === 0) {
+        return {
+          allowed: false,
+          reason: "File uploads require a Lab plan.",
+        };
+      }
+      return { allowed: true };
+    }
+
+    case "create_lab_note": {
+      if (!limits.labNotesEnabled) {
+        return {
+          allowed: false,
+          reason: "Lab notes require a Lab plan.",
+        };
+      }
+      return { allowed: true };
+    }
   }
 }
-

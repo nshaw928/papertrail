@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, UserPlus } from "lucide-react";
+import { Trash2, UserPlus, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +13,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface LabDashboardProps {
   lab: { id: string; name: string; role: string };
   members: {
     user_id: string;
     role: string;
-    invited_email: string | null;
+    email: string | null;
+    display_name: string | null;
     joined_at: string | null;
   }[];
   invitations: {
@@ -29,15 +39,43 @@ interface LabDashboardProps {
     created_at: string | null;
     expires_at: string | null;
   }[];
+  currentUserId: string;
 }
 
-export default function LabDashboard({
+export default function LabMembers({
   lab,
   members,
   invitations,
+  currentUserId,
 }: LabDashboardProps) {
   const router = useRouter();
   const isAdmin = lab.role === "owner" || lab.role === "admin";
+  const isOwner = lab.role === "owner";
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  async function handleLeaveLab() {
+    setLeaving(true);
+    try {
+      const res = await fetch(`/api/labs/${lab.id}/members`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId }),
+      });
+      if (res.ok) {
+        setLeaveOpen(false);
+        router.refresh();
+      }
+    } finally {
+      setLeaving(false);
+    }
+  }
+
+  function displayMember(m: { email: string | null; display_name: string | null; user_id: string }) {
+    if (m.display_name) return m.display_name;
+    if (m.email) return m.email;
+    return m.user_id.slice(0, 8) + "...";
+  }
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -52,6 +90,41 @@ export default function LabDashboard({
             </Badge>
           </p>
         </div>
+        {!isOwner && (
+          <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <LogOut className="h-4 w-4 mr-1" />
+                Leave Lab
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Leave {lab.name}?</DialogTitle>
+                <DialogDescription>
+                  You will lose access to all lab collections, announcements, and
+                  notes. You can be re-invited later.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setLeaveOpen(false)}
+                  disabled={leaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleLeaveLab}
+                  disabled={leaving}
+                >
+                  {leaving ? "Leaving..." : "Leave Lab"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Members */}
@@ -71,13 +144,13 @@ export default function LabDashboard({
               >
                 <div>
                   <span className="text-sm">
-                    {m.invited_email ?? m.user_id}
+                    {displayMember(m)}
                   </span>
                   <Badge variant="secondary" className="ml-2">
                     {m.role}
                   </Badge>
                 </div>
-                {isAdmin && m.role !== "owner" && (
+                {isAdmin && m.role !== "owner" && m.user_id !== currentUserId && (
                   <Button
                     variant="ghost"
                     size="icon-xs"
