@@ -19,8 +19,18 @@ export async function POST(request: NextRequest) {
 
   const stripe = getStripe();
 
+  const validPlans = ["researcher", "lab"];
+  const validBilling = ["monthly", "yearly"];
+
   if (!plan || !billing) {
     return NextResponse.json({ error: "Missing plan or billing" }, { status: 400 });
+  }
+
+  if (!validPlans.includes(plan)) {
+    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  }
+  if (!validBilling.includes(billing)) {
+    return NextResponse.json({ error: "Invalid billing interval" }, { status: 400 });
   }
 
   // Validate labId: user must be owner/admin of the lab
@@ -47,33 +57,38 @@ export async function POST(request: NextRequest) {
 
   let customerId = existingSub?.stripe_customer_id;
 
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: user.email,
-      metadata: { supabase_user_id: user.id },
+  try {
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = customer.id;
+    }
+
+    const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
+      plan === "lab"
+        ? [{ price: priceId, quantity: 1, adjustable_quantity: { enabled: true, minimum: 1, maximum: 50 } }]
+        : [{ price: priceId, quantity: 1 }];
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      line_items: lineItems,
+      success_url: `${origin}/settings?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pricing`,
+      metadata: {
+        supabase_user_id: user.id,
+        plan,
+        ...(labId ? { lab_id: labId } : {}),
+      },
     });
-    customerId = customer.id;
+
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe checkout error:", err);
+    return NextResponse.json({ error: "Payment service unavailable" }, { status: 502 });
   }
-
-  const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
-
-  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
-    plan === "lab"
-      ? [{ price: priceId, quantity: 1, adjustable_quantity: { enabled: true, minimum: 1, maximum: 50 } }]
-      : [{ price: priceId, quantity: 1 }];
-
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: "subscription",
-    line_items: lineItems,
-    success_url: `${origin}/settings?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/pricing`,
-    metadata: {
-      supabase_user_id: user.id,
-      plan,
-      ...(labId ? { lab_id: labId } : {}),
-    },
-  });
-
-  return NextResponse.json({ url: session.url });
 }

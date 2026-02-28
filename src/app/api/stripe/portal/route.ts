@@ -24,10 +24,15 @@ export async function POST(request: NextRequest) {
   const stripe = getStripe();
   const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer: sub.stripe_customer_id,
-    return_url: `${origin}/settings`,
-  });
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: sub.stripe_customer_id,
+      return_url: `${origin}/settings`,
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe portal error:", err);
+    return NextResponse.json({ error: "Payment service unavailable" }, { status: 502 });
+  }
 }

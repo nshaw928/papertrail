@@ -62,23 +62,32 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
         }
 
-        const { error: upsertError } = await admin.from("subscriptions").upsert(
-          {
-            user_id: userId,
-            lab_id: labId,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: sub.id,
-            plan,
-            status: "active",
-            current_period_start: new Date(item.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(item.current_period_end * 1000).toISOString(),
-            cancel_at_period_end: sub.cancel_at_period_end,
-          },
-          { onConflict: "user_id" }
-        );
-        if (upsertError) {
-          console.error("Supabase upsert failed:", upsertError);
-          return NextResponse.json({ error: "Database error" }, { status: 500 });
+        // Check if this subscription was already processed (idempotent against Stripe retries)
+        const { data: existingSub } = await admin
+          .from("subscriptions")
+          .select("id")
+          .eq("stripe_subscription_id", sub.id)
+          .single();
+
+        if (!existingSub) {
+          const { error: upsertError } = await admin.from("subscriptions").upsert(
+            {
+              user_id: userId,
+              lab_id: labId,
+              stripe_customer_id: session.customer as string,
+              stripe_subscription_id: sub.id,
+              plan,
+              status: "active",
+              current_period_start: new Date(item.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(item.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: sub.cancel_at_period_end,
+            },
+            { onConflict: "user_id" }
+          );
+          if (upsertError) {
+            console.error("Supabase upsert failed:", upsertError);
+            return NextResponse.json({ error: "Database error" }, { status: 500 });
+          }
         }
         break;
       }
