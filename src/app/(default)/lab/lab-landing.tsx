@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FolderOpen, StickyNote, Users } from "lucide-react";
+import {
+  BookOpen,
+  FolderOpen,
+  Megaphone,
+  ShieldCheck,
+  Sparkles,
+  StickyNote,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import CreateLabForm from "./create-lab-form";
 
 export interface PendingInvitation {
   id: string;
@@ -45,13 +48,13 @@ export default function LabLanding({ invitations, userEmail }: LabLandingProps) 
 
       {/* Value proposition */}
       <div className="space-y-5">
-        <h2 className="text-lg font-semibold">How labs work</h2>
+        <h2 className="text-lg font-semibold">What you get with a lab</h2>
 
         <div className="grid gap-4">
           <div className="flex gap-3">
             <FolderOpen className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium text-sm">Shared collections <span className="text-muted-foreground font-normal">(coming soon)</span></p>
+              <p className="font-medium text-sm">Shared collections</p>
               <p className="text-sm text-muted-foreground">
                 Pool reading lists across the group so everyone can browse, add
                 to, and build on the same sets of papers.
@@ -60,9 +63,30 @@ export default function LabLanding({ invitations, userEmail }: LabLandingProps) 
           </div>
 
           <div className="flex gap-3">
+            <BookOpen className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">Journal club</p>
+              <p className="text-sm text-muted-foreground">
+                Schedule and run paper discussions with file uploads for
+                presenter slides and notes.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Megaphone className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">Announcements feed</p>
+              <p className="text-sm text-muted-foreground">
+                Post updates to keep everyone in sync on what matters.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
             <StickyNote className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium text-sm">Lab notes on papers <span className="text-muted-foreground font-normal">(coming soon)</span></p>
+              <p className="font-medium text-sm">Lab notes on papers</p>
               <p className="text-sm text-muted-foreground">
                 Leave notes that stay attached to the paper — shared context
                 your whole lab can see and contribute to.
@@ -71,38 +95,38 @@ export default function LabLanding({ invitations, userEmail }: LabLandingProps) 
           </div>
 
           <div className="flex gap-3">
-            <Users className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
+            <ShieldCheck className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium text-sm">Member management</p>
+              <p className="font-medium text-sm">Member management &amp; roles</p>
               <p className="text-sm text-muted-foreground">
-                PIs control who has access. Every lab member gets Researcher-tier
-                features included with their seat.
+                Control access with owner, admin, and member roles.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Sparkles className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">Everything in Researcher included</p>
+              <p className="text-sm text-muted-foreground">
+                Every lab member gets full Researcher-tier features with their
+                seat.
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Create a lab */}
+      {/* Coming soon */}
       <Card>
         <CardHeader>
-          <CardTitle>Start a lab</CardTitle>
-          <CardDescription>
-            If you&apos;re a PI or group leader, create a lab and invite your
-            colleagues.
-          </CardDescription>
+          <CardTitle>Coming soon</CardTitle>
         </CardHeader>
         <CardContent>
-          <CreateLabForm />
-        </CardContent>
-        <CardFooter>
           <p className="text-sm text-muted-foreground">
-            Labs are $8/member/month.{" "}
-            <Link href="/pricing" className="underline underline-offset-4 hover:text-foreground">
-              See pricing &rarr;
-            </Link>
+            We&apos;re putting the finishing touches on Labs. Stay tuned.
           </p>
-        </CardFooter>
+        </CardContent>
       </Card>
 
       {/* Soft nudge */}
