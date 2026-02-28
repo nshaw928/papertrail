@@ -164,12 +164,23 @@ export default function AppSidebar({ user, collections, favorites = [] }: AppSid
                 {hasFavorites ? (
                   <Collapsible defaultOpen className="group/collapsible">
                     <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith("/library/collections")}
+                      >
+                        <Link href="/library/collections">
                           <Star />
                           <span>Collections</span>
-                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                        </SidebarMenuButton>
+                        </Link>
+                      </SidebarMenuButton>
+                      <CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-sidebar-accent"
+                          aria-label="Toggle collections"
+                        >
+                          <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </button>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
@@ -197,7 +208,7 @@ export default function AppSidebar({ user, collections, favorites = [] }: AppSid
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
                               <Link
-                                href="/library"
+                                href="/library/collections"
                                 className="text-muted-foreground"
                               >
                                 <FolderOpen className="h-4 w-4" />
@@ -212,12 +223,23 @@ export default function AppSidebar({ user, collections, favorites = [] }: AppSid
                 ) : collections.length > 0 ? (
                   <Collapsible defaultOpen className="group/collapsible">
                     <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith("/library/collections")}
+                      >
+                        <Link href="/library/collections">
                           <FolderOpen />
                           <span>Collections</span>
-                          <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                        </SidebarMenuButton>
+                        </Link>
+                      </SidebarMenuButton>
+                      <CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-sidebar-accent"
+                          aria-label="Toggle collections"
+                        >
+                          <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </button>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
