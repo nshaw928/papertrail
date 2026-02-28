@@ -2,9 +2,43 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Search, Network, FolderOpen, FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const features = [
+  {
+    icon: Search,
+    title: "Search",
+    description:
+      "Search across 250M+ academic papers with fast, relevant results powered by OpenAlex.",
+  },
+  {
+    icon: Network,
+    title: "Citation Graphs",
+    description:
+      "Visualize citation networks to discover connections and trace the evolution of ideas.",
+  },
+  {
+    icon: FolderOpen,
+    title: "Collections",
+    description:
+      "Organize papers into collections for easy reference across projects and topics.",
+  },
+  {
+    icon: FlaskConical,
+    title: "Lab Collaboration",
+    description:
+      "Share collections, run journal clubs, and collaborate with your research group.",
+  },
+];
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -30,9 +64,8 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-10 md:gap-12 items-center md:items-start pt-8 md:pt-16">
-      {/* Left column — 1/3 */}
-      <div className="w-full md:w-1/3 space-y-6 text-center md:text-left">
+    <div className="flex flex-col items-center pt-12 md:pt-20 max-w-2xl mx-auto px-4">
+      <div className="space-y-6 text-center">
         <div className="space-y-3">
           <Badge variant="outline" className="text-xs">
             alpha
@@ -46,7 +79,7 @@ export default function LandingPage() {
         </div>
 
         {/* Waitlist form */}
-        <form onSubmit={handleWaitlist} className="space-y-3">
+        <form onSubmit={handleWaitlist} className="space-y-3 max-w-md mx-auto">
           <div className="flex gap-2">
             <Input
               type="email"
@@ -65,33 +98,33 @@ export default function LandingPage() {
           )}
         </form>
 
-        {/* Skip the line */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-3 text-muted-foreground text-xs">
-            <div className="h-px flex-1 bg-border" />
-            <span>or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Want to support development and get immediate access?{" "}
-            <Link
-              href="/pricing"
-              className="text-primary hover:underline font-medium"
-            >
-              See our plans
-            </Link>
-          </p>
-        </div>
+        {/* Login link */}
+        <p className="text-sm text-muted-foreground">
+          Already have access?{" "}
+          <Link
+            href="/login"
+            className="text-primary hover:underline font-medium"
+          >
+            Log in
+          </Link>
+        </p>
       </div>
 
-      {/* Right column — 2/3 */}
-      <div className="w-full md:w-2/3">
-        <div className="aspect-[16/10] rounded-lg border bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 flex items-center justify-center">
-          <div className="text-center space-y-2 text-muted-foreground">
-            <p className="text-sm">App Preview</p>
-            <p className="text-xs">Screenshot coming soon</p>
-          </div>
-        </div>
+      {/* Feature cards */}
+      <div className="grid gap-4 sm:grid-cols-2 w-full mt-12">
+        {features.map((f) => (
+          <Card key={f.title}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <f.icon className="h-4 w-4 text-primary" />
+                {f.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{f.description}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );

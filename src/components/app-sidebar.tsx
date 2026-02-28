@@ -15,7 +15,6 @@ import {
   Plus,
   ChevronRight,
   Waypoints,
-  CreditCard,
   FlaskConical,
   Info,
   MessageSquare,
@@ -336,12 +335,6 @@ export default function AppSidebar({ user, collections, favorites = [] }: AppSid
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/pricing">
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Plans & Pricing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

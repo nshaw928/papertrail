@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/app-sidebar";
 import type { SidebarFavorite } from "@/components/app-sidebar";
-import { untyped } from "@/lib/supabase/untyped";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,7 +45,7 @@ export default async function RootLayout({
   let favorites: SidebarFavorite[] = [];
   if (user) {
     try {
-      const { data } = await untyped(supabase).rpc("get_sidebar_favorites");
+      const { data } = await supabase.rpc("get_sidebar_favorites");
       favorites = (data ?? []) as SidebarFavorite[];
     } catch {
       // Function may not exist yet if migration hasn't run
@@ -58,15 +57,19 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
-          <AppSidebar user={user} collections={collections} favorites={favorites} />
-          <SidebarInset>
-            <header className="flex h-12 shrink-0 items-center border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-            </header>
-            {children}
-          </SidebarInset>
-        </SidebarProvider>
+        {user ? (
+          <SidebarProvider>
+            <AppSidebar user={user} collections={collections} favorites={favorites} />
+            <SidebarInset>
+              <header className="flex h-12 shrink-0 items-center border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+              </header>
+              {children}
+            </SidebarInset>
+          </SidebarProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

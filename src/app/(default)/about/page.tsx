@@ -7,9 +7,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
-import { getUserPlan } from "@/lib/supabase/plans";
-import PricingCards from "../pricing/pricing-cards";
 
 const values = [
   {
@@ -38,14 +35,7 @@ const values = [
   },
 ];
 
-export default async function AboutPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const userPlan = user ? await getUserPlan(supabase, user.id) : null;
-
+export default function AboutPage() {
   return (
     <div className="space-y-8 max-w-3xl">
       <div className="space-y-3">
@@ -79,15 +69,6 @@ export default async function AboutPage() {
         </Button>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Plans & Pricing</h2>
-          <p className="text-muted-foreground">
-            Start free. Upgrade when you need unlimited searches, AI summaries, and collaboration.
-          </p>
-        </div>
-        <PricingCards currentPlan={userPlan?.plan ?? "free"} isLoggedIn={!!user} />
-      </div>
     </div>
   );
 }
