@@ -88,7 +88,9 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {isAdmin(user.id) && <InviteManager />}
+      {(isAdmin(user.id) || userPlan.plan === "alpha") && (
+        <InviteManager maxInvites={isAdmin(user.id) ? null : 2} />
+      )}
 
       <Card>
         <CardHeader>

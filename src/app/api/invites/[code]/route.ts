@@ -67,5 +67,13 @@ export async function POST(
     return NextResponse.json({ error: "Invalid, expired, or already used invite code" }, { status: 400 });
   }
 
+  // Auto-assign alpha plan to invited users
+  await admin
+    .from("subscriptions")
+    .upsert(
+      { user_id: userId, plan: "alpha", status: "active" },
+      { onConflict: "user_id" }
+    );
+
   return NextResponse.json({ success: true });
 }

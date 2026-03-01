@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/card";
 import { Copy, Check } from "lucide-react";
 
-export default function InviteManager() {
+export default function InviteManager({
+  maxInvites = null,
+}: {
+  maxInvites?: number | null;
+}) {
   const [invites, setInvites] = useState<InviteLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -69,20 +73,40 @@ export default function InviteManager() {
       <CardHeader>
         <CardTitle>Invite Links</CardTitle>
         <CardDescription>
-          Generate invite links to let new users sign up.
+          {maxInvites !== null
+            ? `Share Papertrail with friends. You can generate up to ${maxInvites} invite links.`
+            : "Generate invite links to let new users sign up."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {maxInvites !== null && (
+          <p className="text-sm text-muted-foreground">
+            {invites.length} / {maxInvites} invites used
+          </p>
+        )}
         <div className="flex gap-2">
-          <Input
-            type="email"
-            placeholder="Email (optional)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="flex-1"
-          />
-          <Button onClick={handleGenerate} disabled={creating} size="sm">
-            {creating ? "..." : "Generate"}
+          {maxInvites === null && (
+            <Input
+              type="email"
+              placeholder="Email (optional)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1"
+            />
+          )}
+          <Button
+            onClick={handleGenerate}
+            disabled={
+              creating ||
+              (maxInvites !== null && invites.length >= maxInvites)
+            }
+            size="sm"
+          >
+            {maxInvites !== null && invites.length >= maxInvites
+              ? "Limit reached"
+              : creating
+                ? "..."
+                : "Generate invite"}
           </Button>
         </div>
 
