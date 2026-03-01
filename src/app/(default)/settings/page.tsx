@@ -26,7 +26,7 @@ export default async function SettingsPage() {
   const lab = await getUserLab(supabase, user.id);
 
   return (
-    <div className="space-y-6 max-w-xl md:max-w-2xl lg:max-w-3xl">
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
 
       <Card>
