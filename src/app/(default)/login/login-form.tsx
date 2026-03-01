@@ -50,16 +50,18 @@ export default function LoginForm() {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
-      } else {
-        // Redeem the invite code
-        if (data.user) {
-          await fetch(`/api/invites/${encodeURIComponent(inviteCode.trim())}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: data.user.id }),
-          });
+      } else if (data.user) {
+        // Redeem the invite code — must succeed for signup to be valid
+        const redeemRes = await fetch(`/api/invites/${encodeURIComponent(inviteCode.trim())}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: data.user.id }),
+        });
+        if (!redeemRes.ok) {
+          setError("Invite code is no longer valid. Please request a new one.");
+        } else {
+          setMessage("Check your email to confirm your account.");
         }
-        setMessage("Check your email to confirm your account.");
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
