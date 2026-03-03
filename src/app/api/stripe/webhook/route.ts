@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe/client";
+import { syncLabSeatCount } from "@/lib/stripe/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PlanType } from "@/lib/types/app";
 
@@ -87,6 +88,11 @@ export async function POST(request: NextRequest) {
           if (upsertError) {
             console.error("Supabase upsert failed:", upsertError);
             return NextResponse.json({ error: "Database error" }, { status: 500 });
+          }
+
+          // Sync seat count for lab plans (checkout defaults to quantity 1)
+          if (plan === "lab" && labId) {
+            syncLabSeatCount(labId).catch(() => {});
           }
         }
         break;

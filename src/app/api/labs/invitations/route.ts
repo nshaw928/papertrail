@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncLabSeatCount } from "@/lib/stripe/sync";
 
 // GET: list pending invitations for the current user
 export async function GET() {
@@ -85,6 +86,9 @@ export async function POST(request: NextRequest) {
     .from("lab_invitations")
     .delete()
     .eq("id", invitationId);
+
+  // Fire-and-forget: sync Stripe seat count
+  syncLabSeatCount(invitation.lab_id).catch(() => {});
 
   return NextResponse.json({ status: "joined", lab_id: invitation.lab_id });
 }

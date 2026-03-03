@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireLabRole, validateInviteRole } from "@/lib/supabase/labs";
+import { syncLabSeatCount } from "@/lib/stripe/sync";
 
 // GET: list lab members
 export async function GET(
@@ -135,6 +136,9 @@ export async function DELETE(
     .delete()
     .eq("lab_id", labId)
     .eq("user_id", targetUserId);
+
+  // Fire-and-forget: sync Stripe seat count
+  syncLabSeatCount(labId).catch(() => {});
 
   return NextResponse.json({ status: "removed" });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getUserPlan } from "@/lib/supabase/plans";
 
 // GET: list labs the user belongs to
 export async function GET() {
@@ -45,6 +46,28 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+
+  // Require an active Lab plan subscription
+  const { plan } = await getUserPlan(admin, user.id);
+  if (plan !== "lab") {
+    return NextResponse.json(
+      { error: "A Lab plan subscription is required" },
+      { status: 403 }
+    );
+  }
+
+  // One lab per user (one subscription = one lab)
+  const { count: labCount } = await admin
+    .from("labs")
+    .select("*", { count: "exact", head: true })
+    .eq("owner_id", user.id);
+
+  if ((labCount ?? 0) > 0) {
+    return NextResponse.json(
+      { error: "You already own a lab" },
+      { status: 409 }
+    );
+  }
 
   // Create lab
   const { data: lab, error: labError } = await admin
